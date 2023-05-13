@@ -1,3 +1,8 @@
+# Project-specific folder 
+*.xlsx
+.~lock.*
+_targets
+
 # History files
 .Rhistory
 .Rapp.history
