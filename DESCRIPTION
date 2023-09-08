@@ -1,7 +1,7 @@
 Package: GreatLakesFW
 Title: Placeholder
-Version: 0.0.0.9000
-Date: 2023-13-05
+Version: 0.0.0.9002
+Date: 2023-09-07
 Authors@R: 
     person(given = "Kevin",
            family = "Cazelles",
@@ -14,7 +14,11 @@ Imports:
     cli,
     curl,
     dplyr,
+    deSolve,
+    ggplot2
+    limSolve,
     readxl,
+    tidyr,
     tarchetypes,
     targets
 License: MIT + file LICENSE

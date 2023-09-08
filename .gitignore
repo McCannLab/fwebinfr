@@ -2,6 +2,9 @@
 *.xlsx
 .~lock.*
 _targets
+notebook.md
+tmp
+fig
 
 # History files
 .Rhistory
