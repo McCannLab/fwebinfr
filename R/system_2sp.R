@@ -1,7 +1,8 @@
 library(deSolve)
 library(dplyr)
-library(tibble)
 library(ggplot2)
+library(limSolve)
+library(tibble)
 library(tidyr)
 dir.create("fig/", showWarnings = FALSE)
 
@@ -107,10 +108,6 @@ get_mat_val <- function(xeq) {
     mat_val <- res$X |> as.data.frame()
     mat_val$stab <- NA_real_
     for (i in seq_len(nrow(mat_val))) {
-        jac <- rbind(
-            c(-mat_val[i, 1], -mat_val[i, 2]),
-            c(0, mat_val[i, 3])
-        )
         mat_val$stab[i] <- get_jac(
             c(
                 a11 = mat_val[i, 1],
