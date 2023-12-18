@@ -1,6 +1,6 @@
 Package: fwebinfr
 Title: Infer Food Webs Interactions
-Version: 0.0.0.9003
+Version: 0.0.1
 Date: 2023-12-18
 Authors@R: 
     person(given = "Kevin",
