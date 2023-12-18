@@ -5,6 +5,7 @@ _targets
 notebook.md
 tmp
 fig
+pres
 
 # History files
 .Rhistory
