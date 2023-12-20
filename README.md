@@ -14,12 +14,23 @@ remotes::install_deps()
 
 # How to
 
+One example that comes with figures can be run once the package loaded:
 
 ```R
 get_fig_exp_1("pres/pres_2023-12-18")
 ```
 
-
+```R
+pars <- c(
+    fw_gen_5sp_2chains_01(FALSE), 
+    burninlength = 5000, 
+    iter = 5000, 
+    type = "mirror"
+)
+res <- pars |> do.call(what = "fw_infer"); apply(res[, 1:8], 2, log10)
+boxplot(res)
+```
+ok
 
 # Data 
 

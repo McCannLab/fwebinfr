@@ -2,6 +2,7 @@
 #' 
 #' @importFrom grDevices dev.off png
 #' @importFrom graphics abline boxplot legend lines par
+#' @export
 
 fw_list_experim  <- function() {
     val <- c("run_experim01", "get_fig_exp_1", "run_experim02")
@@ -11,6 +12,7 @@ fw_list_experim  <- function() {
 }
 
 
+#'
 quick_ode_plot <- function(fun, init, times, pars) {
     out <- deSolve::ode(init, times, fun, pars)
     out |>
@@ -26,6 +28,10 @@ quick_ode_plot <- function(fun, init, times, pars) {
 }
 
 
+
+#' @describeIn fw_list_experim First experiment 
+#' @param eff_max maximum transfer efficiency.
+#' @export
 run_experim01 <- function(eff_max = 1) {
     a_21 <- seq(0.055, 0.15, 0.005)
     res_A <- res_B <- res_xsample <- res_stab <- list()
@@ -57,6 +63,9 @@ run_experim01 <- function(eff_max = 1) {
 }
 
 
+#' @describeIn fw_list_experim First experiment with three different eff_max
+#' @param output_dir output directory
+#' @export 
 get_fig_exp_1 <- function(output_dir = ".") {
     ttl <- c("eff_max_1.png", "eff_max_2.png", "eff_max_0_75.png")
 

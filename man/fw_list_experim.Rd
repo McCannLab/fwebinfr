@@ -2,10 +2,28 @@
 % Please edit documentation in R/fw_experi.R
 \name{fw_list_experim}
 \alias{fw_list_experim}
+\alias{run_experim01}
+\alias{get_fig_exp_1}
 \title{Numerical experiments}
 \usage{
 fw_list_experim()
+
+run_experim01(eff_max = 1)
+
+get_fig_exp_1(output_dir = ".")
+}
+\arguments{
+\item{eff_max}{maximum transfer efficiency.}
+
+\item{output_dir}{output directory}
 }
 \description{
 Numerical experiments
 }
+\section{Functions}{
+\itemize{
+\item \code{run_experim01()}: First experiment
+
+\item \code{get_fig_exp_1()}: First experiment with three different eff_max
+
+}}

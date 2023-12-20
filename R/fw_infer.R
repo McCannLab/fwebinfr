@@ -2,10 +2,12 @@
 #'
 #' Function to estimate interaction strengths using LIM.
 #' 
-#' @param A interaction matrix
-#' @param R reproduction/mortality.
-#' @param B biomass matrix.
+#' @param A interaction matrix (either 0/-1/1 or with coefficient).
+#' @param R reproduction/mortality vector.
+#' @param B biomass vector.
+#' @param sdB vector of standard deviation biomass (see [limSolve::xsample()]).
 #' @param eff_max maximum transfer efficiency.
+#' @param ... further argument passed to [limSolve::xsample()]).
 #'
 #' @details
 #' LIM based on generalized linear Lotka-Volterra model with the following 
@@ -17,15 +19,20 @@
 #' * Gellner G, McCann K, Hastings A. 2023. Stable diverse food webs become more common when interactions are more biologically constrained. Proceedings of the National Academy of Sciences 120:e2212061120. DOI: 10.1073/pnas.2212061120.
 #'
 #' @export
-fw_infer <- function(A, R, B, eff_max = 1) {
+fw_infer <- function(A, R, B, eff_max = 1, sdB = NULL, ...) {
     stopifnot(inherits(A, "matrix"))
     stopifnot(NROW(A) == NCOL(A))
     stopifnot(NROW(A) == length(R))
     stopifnot(length(B) == length(R))
     U <- get_U(A)
     stopifnot(nrow(U) > 0)
-    return(wrap_xsample(A, B, R, U, eff_max = eff_max))
+    if (! is.null(sdB)) {
+        return(wrap_xsample_AB(A, B, R, U, sdB, eff_max = eff_max, ...))
+    } else {
+        return(wrap_xsample(A, B, R, U, eff_max = eff_max, ...))
+    }
 }
+
 
 # edge list: matrix p x 2 where p is is the number of non 0 interaction
 # it goes column by column so is not-null, [2,1] would be indexed before [1,2].
@@ -90,14 +97,38 @@ get_G_H <- function(A, eff_max = 1) {
     return(list(G = rbind(G_sym, G_pos), H = rbind(H_sym, H_pos)))
 }
 
-wrap_xsample <- function(A, B, R, U, eff_max = 1, mod = mod_lv_fr1) {
+wrap_xsample_AB <- function(A, B, R, U, sdB, eff_max = 1, mod = mod_lv_fr1, ...) {
+    # we use A to know the real interactions but in the methods
+    # A takes 1, -1 or 0
+    AA <- (A > 0) - (A < 0)
+    U <- get_U(A)
+    tmp <- get_E_F(AA, B, R)
+    ls_AB  <- list(
+        A = tmp$E,
+        B = tmp$F,
+        sdB = sdB
+    )
+    tmp$E 
+    tmp <- do.call(
+        limSolve::xsample,
+        c(ls_AB, get_G_H(AA, eff_max), ...)
+    )
+    out <- tmp$X |> as.data.frame()
+
+    out$leading_ev <- get_xsample_stab(out, AA, B, R, U, mod = mod)
+
+    return(out)
+}
+
+
+wrap_xsample <- function(A, B, R, U, eff_max = 1, mod = mod_lv_fr1, ...) {
     # we use A to know the real interactions but in the methods
     # A takes 1, -1 or 0
     AA <- (A > 0) - (A < 0)
     U <- get_U(A)
     tmp <- do.call(
         limSolve::xsample,
-        c(get_E_F(AA, B, R), get_G_H(AA, eff_max), burninlength = 5000)
+        c(get_E_F(AA, B, R), get_G_H(AA, eff_max), ...)
     )
     out <- tmp$X |> as.data.frame()
 

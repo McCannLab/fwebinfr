@@ -4,16 +4,20 @@
 \alias{fw_infer}
 \title{Estimate interaction strengths}
 \usage{
-fw_infer(A, R, B, eff_max = 1)
+fw_infer(A, R, B, eff_max = 1, sdB = NULL, ...)
 }
 \arguments{
-\item{A}{interaction matrix}
+\item{A}{interaction matrix (either 0/-1/1 or with coefficient).}
 
-\item{R}{reproduction/mortality.}
+\item{R}{reproduction/mortality vector.}
 
-\item{B}{biomass matrix.}
+\item{B}{biomass vector.}
 
 \item{eff_max}{maximum transfer efficiency.}
+
+\item{sdB}{vector of standard deviation biomass (see \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
+
+\item{...}{further argument passed to \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
 }
 \description{
 Function to estimate interaction strengths using LIM.
