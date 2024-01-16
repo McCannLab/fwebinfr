@@ -1,0 +1,30 @@
+---
+title: "Rubberducking"
+author: "Kevin Cazelles"
+date: 16-01-2024
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Rubberducking}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+# Using LIM to predict biomass 
+
+
+```{R setup}
+library(fwebinfr)
+# val <- fwebinfr:::fw_gen_parms_exper2()
+# val
+```
+
+Here is an example that is not working.
+
+It should work 
+
+```R
+quick_ode_plot(
+  mod_lv_fr1, rep(10, 5), seq(1, 50, 0.1), pars = val
+)
+```

@@ -43,21 +43,23 @@ get_U <- function(A) {
 get_E_F <- function(A, B, R) {
     nr <- NROW(A)
     # determine the number of unknown interaction to be searched for
-    # matrix U describes where are non-null interactions in A
+    # matrix U gives the coordinates of non-null interactions in A
     U <- get_U(A)
     ni <- NROW(U)
 
-    # foodweb interaction provides the first set of constrains
+    # foodweb interaction gives a first set of constrains
     E_fw <- matrix(0, nr, ni)
     for (i in seq_len(nr)) {
+        # A is either -1, 0 or 1
         tmp <- A[i, ] * B
-        for (j in seq(tmp)) {
+        for (j in seq_len(nr)) {
             if (tmp[j] != 0) {
                 ind_ij <- which(U[, 1] == i & U[, 2] == j)
                 E_fw[i, ind_ij] <- tmp[j]
             }
         }
     }
+    #
     F_fw <- -R
 
     return(list(E = E_fw, F = F_fw))
@@ -65,8 +67,8 @@ get_E_F <- function(A, B, R) {
 
 get_G_H <- function(A, eff_max = 1) {
     U <- get_U(A)
-    ni <- NROW(U)
-    nr <- NROW(A)
+    ni <- NROW(U) # number of interaction
+    nr <- NROW(A) # number of spec 
     # derive constraints using eff_max * a_{j,i} >= a_{i,j}
     # eff_max * a_{j,i} - a_{i,j} >= 0
     H_sym <- G_sym <- NULL
@@ -97,18 +99,27 @@ get_G_H <- function(A, eff_max = 1) {
     return(list(G = rbind(G_sym, G_pos), H = rbind(H_sym, H_pos)))
 }
 
+wrap_xsample <- function(A, B, R, U, eff_max = 1, mod = mod_lv_fr1, ...) {
+    # we use A to know the real interactions but in the methods
+    # A takes 1, -1 or 0
+    AA <- (A > 0) - (A < 0)
+    tmp <- do.call(
+        limSolve::xsample,
+        c(get_E_F(A = AA, B = B, R = R), get_G_H(AA, eff_max), ...)
+    )
+    out <- tmp$X |> as.data.frame()
+
+    out$leading_ev <- get_xsample_stab(out, AA, B, R, U, mod = mod)
+
+    return(out)
+}
+
 wrap_xsample_AB <- function(A, B, R, U, sdB, eff_max = 1, mod = mod_lv_fr1, ...) {
     # we use A to know the real interactions but in the methods
     # A takes 1, -1 or 0
     AA <- (A > 0) - (A < 0)
-    U <- get_U(A)
     tmp <- get_E_F(AA, B, R)
-    ls_AB  <- list(
-        A = tmp$E,
-        B = tmp$F,
-        sdB = sdB
-    )
-    tmp$E 
+    ls_AB <- list(A = tmp$E, B = tmp$F, sdB = sdB)
     tmp <- do.call(
         limSolve::xsample,
         c(ls_AB, get_G_H(AA, eff_max), ...)
@@ -120,21 +131,21 @@ wrap_xsample_AB <- function(A, B, R, U, sdB, eff_max = 1, mod = mod_lv_fr1, ...)
     return(out)
 }
 
-
-wrap_xsample <- function(A, B, R, U, eff_max = 1, mod = mod_lv_fr1, ...) {
-    # we use A to know the real interactions but in the methods
-    # A takes 1, -1 or 0
-    AA <- (A > 0) - (A < 0)
+# get interaction matrix from one result
+get_A_from_res <- function(x, A) {
     U <- get_U(A)
-    tmp <- do.call(
-        limSolve::xsample,
-        c(get_E_F(AA, B, R), get_G_H(AA, eff_max), ...)
-    )
-    out <- tmp$X |> as.data.frame()
-
-    out$leading_ev <- get_xsample_stab(out, AA, B, R, U, mod = mod)
-
-    return(out)
+    stopifnot(length(x) == nrow(U))
+    AA <- (A > 0) - (A < 0)
+    out <- AA * 0
+    for (i in seq_len(nrow(U))) {
+        out[U[i, 1], U[i, 2]] <- as.numeric(x[i]) * AA[U[i, 1], U[i, 2]]
+    }
+    out
+}
+# get Bodymass vector from one result
+get_B_from_res <- function(x, A, R) {
+    U <- get_U(A)
+    limSolve::lsei(E = get_A_from_res(x, A), F = -R)$X
 }
 
 get_jacobian <- function(A, B, R, mod = mod_lv_fr1) {

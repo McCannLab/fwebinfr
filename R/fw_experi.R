@@ -4,7 +4,7 @@
 #' @importFrom graphics abline boxplot legend lines par
 #' @export
 
-fw_list_experim  <- function() {
+fw_list_experim <- function() {
     val <- c("run_experim01", "get_fig_exp_1", "run_experim02")
     ul  <- cli::cli_ul()
     cli::cli_li()
@@ -12,7 +12,7 @@ fw_list_experim  <- function() {
 }
 
 
-#'
+# quick_ode_plot(mod_lv_fr1, rep(10, 5), seq(1, 50, 0.1), pars = fw_gen_parms_exper2())
 quick_ode_plot <- function(fun, init, times, pars) {
     out <- deSolve::ode(init, times, fun, pars)
     out |>
@@ -111,26 +111,39 @@ get_fig_exp_1 <- function(output_dir = ".") {
 
 #--------- Figure 3 species
 
-run_experim02 <- function() {
-    A <- rbind(
-        c(-0.1, -0.3, 0),
-        c(0.2, -0.1, -0.2),
-        c(0, 0.1, 0)
+run_experim02 <- function(eff_max = 1) {
+
+    n  <- 10
+    a_13 <- -seq(0.01, 0.1, length.out = n)
+    a_31 <- -0.5*a_13
+    a_35 <- -seq(0.01, 0.1, length.out = n)
+    a_53 <- -0.5 * a_35
+    par0  <- fw_gen_parms_exper2()
+    res_A <- res_B <- res_xsample <- list()
+
+    cli::cli_progress_bar("increases one channel",
+        total = n,
+        type = "iterator"
     )
-    R <- c(0.3, -0.2, -0.05)
+    for (i in seq_len(10)) {
+        A <- par0$A
+        A[1, 3] <- a_13[i]
+        A[3, 1] <- a_31[i]
+        A[3, 5] <- a_35[i]
+        A[5, 3] <- a_53[i]
+        B <- limSolve::lsei(E = A, F = -par0$R)$X
+        res_A[[i]] <- A
+        res_B[[i]] <- B
+        res_xsample[[i]] <- fw_infer(A, B, par0$R, eff_max = eff_max)
+        cli::cli_progress_update()
+    }
+    cli::cli_progress_done()
 
-    B <- limSolve::lsei(E = A, F = -R)$X
-    B
+    biom_eq <- do.call(rbind, res_B) |> as.data.frame()
+    names(biom_eq) <- paste0("biom_eq_", 1:2)
 
-    res_xsample <- wrap_xsample(A, B, R)
-
-    quick_ode_plot(
-        mod_lv_fr1,
-        c(0.5, 0.1, 0.2),
-        times,
-        list(
-            R = R,
-            A = A
-        )
-    )
+    return(list(
+        dat = cbind(biom_eq, a_21 = a_21, stab = unlist(res_stab)),
+        x_sample = res_xsample
+    ))
 }

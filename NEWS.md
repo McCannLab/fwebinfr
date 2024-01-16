@@ -1,5 +1,6 @@
 # fwebinfr devel 
 
+* Add vignette "Get started with fwebinfr".
 * `fw_infer()` gains arguments `sdB` to dealth with biomass variation and `...`
 to pass futher argument to `limSolve::xsample()`.
 

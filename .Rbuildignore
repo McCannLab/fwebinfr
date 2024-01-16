@@ -1,3 +1,5 @@
 ^LICENSE\.md$
 ^pres$
 ^fig$
+^doc$
+^Meta$
