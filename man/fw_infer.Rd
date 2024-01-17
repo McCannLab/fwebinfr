@@ -7,7 +7,8 @@
 fw_infer(A, R, B, eff_max = 1, sdB = NULL, ...)
 }
 \arguments{
-\item{A}{interaction matrix (either 0/-1/1 or with coefficient).}
+\item{A}{interaction matrix. Either a signed matrix or a matrix with signed
+coefficient. In both cases the matrix is currently treated as a signed one.}
 
 \item{R}{reproduction/mortality vector.}
 
@@ -17,7 +18,12 @@ fw_infer(A, R, B, eff_max = 1, sdB = NULL, ...)
 
 \item{sdB}{vector of standard deviation biomass (see \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
 
-\item{...}{further argument passed to \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
+\item{...}{further arguments passed to \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
+}
+\value{
+Return a data frame with one column per interaction strength estimated in
+A (i.e. one per 1 or -1 in A). The number of row is given by the number of
+interaction estimated by \code{xsample()} (see parameter \code{iter} in \code{xsample()}).
 }
 \description{
 Function to estimate interaction strengths using LIM.

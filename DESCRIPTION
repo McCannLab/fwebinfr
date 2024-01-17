@@ -1,26 +1,30 @@
 Package: fwebinfr
 Title: Infer Food Webs Interactions
-Version: 0.0.1.9002
-Date: 2023-12-21
+Version: 0.0.1.9003
+Date: 2024-01-17
 Authors@R: 
     person(given = "Kevin",
            family = "Cazelles",
            role = c("aut", "cre"),
            email = "kevin.cazelles@insileco.io",
            comment = c(ORCID = "0000-0001-6619-9874"))
-Description: Build food webs and Use LIM approach to infer food web interactions.
+Description: Build food webs and use LIM approach to infer food web interactions.
 Depends: R (>= 4.2.0)
 Imports: 
-    cli,
+    cli (>= 3.6),
     deSolve (>= 1.4.0),
-    dplyr,
-    ggplot2,
-    limSolve (>= 1.5.0),
-    rootSolve (>= 1.8.0),
-    tidyr
+    dplyr (>= 1.1),
+    ggplot2 (>= 3.4),
+    limSolve (>= 1.5),
+    rootSolve (>= 1.8),
+    tidyr (>= 1.3),
+    utils
 Suggests:
     curl,
+    knitr,
+    patchwork,
     readxl,
+    rmarkdown,
     tarchetypes,
     targets,
     testthat (>= 3.0.0)

@@ -2,12 +2,13 @@
 #'
 #' Function to estimate interaction strengths using LIM.
 #' 
-#' @param A interaction matrix (either 0/-1/1 or with coefficient).
+#' @param A interaction matrix. Either a signed matrix or a matrix with signed 
+#' coefficient. In both cases the matrix is currently treated as a signed one.
 #' @param R reproduction/mortality vector.
 #' @param B biomass vector.
 #' @param sdB vector of standard deviation biomass (see [limSolve::xsample()]).
 #' @param eff_max maximum transfer efficiency.
-#' @param ... further argument passed to [limSolve::xsample()]).
+#' @param ... further arguments passed to [limSolve::xsample()]).
 #'
 #' @details
 #' LIM based on generalized linear Lotka-Volterra model with the following 
@@ -15,18 +16,25 @@
 #' \deqn{\frac{1/X}{X'} = A * X + R }{1/X X' = A * X + R}
 #' See [limSolve::xsample()] for the meaning of matrices E, F, G and H.
 #' 
+#' @return
+#' Return a data frame with one column per interaction strength estimated in 
+#' A (i.e. one per 1 or -1 in A). The number of row is given by the number of 
+#' interaction estimated by `xsample()` (see parameter `iter` in `xsample()`). 
+#' 
 #' @references 
 #' * Gellner G, McCann K, Hastings A. 2023. Stable diverse food webs become more common when interactions are more biologically constrained. Proceedings of the National Academy of Sciences 120:e2212061120. DOI: 10.1073/pnas.2212061120.
 #'
 #' @export
 fw_infer <- function(A, R, B, eff_max = 1, sdB = NULL, ...) {
-    stopifnot(inherits(A, "matrix"))
-    stopifnot(NROW(A) == NCOL(A))
-    stopifnot(NROW(A) == length(R))
-    stopifnot(length(B) == length(R))
+    stopifnot(exprs = {
+        inherits(A, "matrix")
+        NROW(A) == NCOL(A)
+        NROW(A) == length(R)
+        length(B) == length(R)
+    })
     U <- get_U(A)
     stopifnot(nrow(U) > 0)
-    if (! is.null(sdB)) {
+    if (!is.null(sdB)) {
         return(wrap_xsample_AB(A, B, R, U, sdB, eff_max = eff_max, ...))
     } else {
         return(wrap_xsample(A, B, R, U, eff_max = eff_max, ...))
@@ -34,8 +42,9 @@ fw_infer <- function(A, R, B, eff_max = 1, sdB = NULL, ...) {
 }
 
 
-# edge list: matrix p x 2 where p is is the number of non 0 interaction
-# it goes column by column so is not-null, [2,1] would be indexed before [1,2].
+# edge list: matrix p x 2 where p is is the number of non-0 interactions,
+# it goes column by column therefore if {1,2} and {2,1} are both not-null, 
+# {2,1} would be indexed before {1,2}.
 get_U <- function(A) {
     return(which(A != 0, arr.ind = TRUE))
 }

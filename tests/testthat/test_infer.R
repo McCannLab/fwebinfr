@@ -22,7 +22,7 @@ test_that("get_U works", {
             dimnames = list(NULL, c("row", "col"))
         )
     )
-    AA  <- A
+    AA <- A
     AA[1, 2] <- 0
     res <- get_U(AA)
     expect_identical(
@@ -41,9 +41,20 @@ test_that("get_G_H works", {
     expect_equal(res$H, matrix(0, nrow = 4))
 })
 
-test_that("fw_infer() format erros", {
+test_that("fw_infer() format errors", {
     expect_error(fw_infer("wrong", R, B, 1))
     expect_error(fw_infer(A, R, c(B, 1), 1))
     expect_error(fw_infer(diag(0, 2), R, B, 1))
     expect_error(fw_infer(diag(3), R, B, 1))
+})
+
+
+test_that("", {
+    suppressWarnings({
+        res1 <- fw_infer(A, R, B)
+        res2 <- fw_infer(A, R, B, iter = 1000)
+    })
+    expect_true(inherits(res1, "data.frame"))
+    expect_identical(dim(res1), c(3000L, 4L))
+    expect_identical(dim(res2), c(1000L, 4L))
 })
