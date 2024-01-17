@@ -21,13 +21,15 @@ Imports:
     utils
 Suggests:
     curl,
+    ggraph,
     knitr,
     patchwork,
     readxl,
     rmarkdown,
     tarchetypes,
     targets,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    tidygraph
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

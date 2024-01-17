@@ -12,7 +12,7 @@ vignette: >
 
 # Using LIM to predict biomass 
 
-Here is an example. First, we load the package.
+Here is an example with 2 species. First, we load the package.
 
 ```{R setup}
 library(fwebinfr)
@@ -66,18 +66,18 @@ Let's plot the dynamics for the system with the min and max leading eigen value.
 p1 <- fwebinfr:::quick_ode_plot(
   fwebinfr:::mod_lv_fr1, rep(0.3, 2), seq(1, 500, 0.1),
   pars = list(
-    A = fwebinfr:::get_A_from_res(res[which.min(res$leading_ev), 1:3], val$A),
-    B = fwebinfr:::get_B_from_res(res[which.min(res$leading_ev), 1:3], val$A, val$R),
-    R = c(0.10, -0.05)
+    A = fwebinfr::fw_get_A_predicted(res[which.min(res$leading_ev), ], val$A),
+    B = fwebinfr::fw_get_B_predicted(res[which.min(res$leading_ev), ], val$A, val$R),
+    R = val$R
   )
 ) + ggtitle("Minimum leading eigen value")
 
 p2 <- fwebinfr:::quick_ode_plot(
   fwebinfr:::mod_lv_fr1, rep(0.3, 2), seq(1, 500, 0.1),
   pars = list(
-    A = fwebinfr:::get_A_from_res(res[which.max(res$leading_ev), 1:3], val$A),
-    B = fwebinfr:::get_B_from_res(res[which.max(res$leading_ev), 1:3], val$A, val$R),
-    R = c(0.10, -0.05)
+    A = fwebinfr::fw_get_A_predicted(res[which.max(res$leading_ev), ], val$A),
+    B = fwebinfr::fw_get_B_predicted(res[which.max(res$leading_ev), ], val$A, val$R),
+    R = val$R
   )
 ) + ggtitle("Maximum leading eigen value")
 p1 / p2

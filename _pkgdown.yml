@@ -1,6 +1,9 @@
 template:
-  package: rotemplate
+  bootstrap: 5
+  bootswatch: lux
+  bslib:
+    pkgdown-nav-height: 100px
 
 authors:
   Kevin Cazelles:
-    href: https://kevcaz.github.io/
+    href: https://kevcaz.insileco.io/

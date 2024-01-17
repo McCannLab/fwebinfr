@@ -2,13 +2,20 @@
 % Please edit documentation in R/fw_infer.R
 \name{fw_infer}
 \alias{fw_infer}
+\alias{fw_get_A_predicted}
+\alias{fw_get_B_predicted}
 \title{Estimate interaction strengths}
 \usage{
 fw_infer(A, R, B, eff_max = 1, sdB = NULL, ...)
+
+fw_get_A_predicted(x, A)
+
+fw_get_B_predicted(x, A, R)
 }
 \arguments{
-\item{A}{interaction matrix. Either a signed matrix or a matrix with signed
-coefficient. In both cases the matrix is currently treated as a signed one.}
+\item{A}{interaction matrix. Either a signed matrix (0/-1/1) or a matrix
+with coefficients. In both cases the matrix is currently treated as a signed
+one.}
 
 \item{R}{reproduction/mortality vector.}
 
@@ -19,6 +26,8 @@ coefficient. In both cases the matrix is currently treated as a signed one.}
 \item{sdB}{vector of standard deviation biomass (see \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
 
 \item{...}{further arguments passed to \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
+
+\item{x}{an object of class \code{fw_predicted_int}}
 }
 \value{
 Return a data frame with one column per interaction strength estimated in
@@ -34,8 +43,17 @@ interaction matrix:
 \deqn{\frac{1/X}{X'} = A * X + R }{1/X X' = A * X + R}
 See \code{\link[limSolve:xsample]{limSolve::xsample()}} for the meaning of matrices E, F, G and H.
 }
+\section{Functions}{
+\itemize{
+\item \code{fw_get_A_predicted()}: returns predicted A.
+
+\item \code{fw_get_B_predicted()}: returns predicted B.
+
+}}
 \references{
 \itemize{
-\item Gellner G, McCann K, Hastings A. 2023. Stable diverse food webs become more common when interactions are more biologically constrained. Proceedings of the National Academy of Sciences 120:e2212061120. DOI: 10.1073/pnas.2212061120.
+\item Gellner G, McCann K, Hastings A. 2023. Stable diverse food webs become
+more common when interactions are more biologically constrained. Proceedings
+of the National Academy of Sciences 120:e2212061120. DOI: 10.1073/pnas.2212061120.
 }
 }

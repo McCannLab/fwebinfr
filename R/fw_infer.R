@@ -2,8 +2,9 @@
 #'
 #' Function to estimate interaction strengths using LIM.
 #' 
-#' @param A interaction matrix. Either a signed matrix or a matrix with signed 
-#' coefficient. In both cases the matrix is currently treated as a signed one.
+#' @param A interaction matrix. Either a signed matrix (0/-1/1) or a matrix 
+#' with coefficients. In both cases the matrix is currently treated as a signed 
+#' one.
 #' @param R reproduction/mortality vector.
 #' @param B biomass vector.
 #' @param sdB vector of standard deviation biomass (see [limSolve::xsample()]).
@@ -22,7 +23,9 @@
 #' interaction estimated by `xsample()` (see parameter `iter` in `xsample()`). 
 #' 
 #' @references 
-#' * Gellner G, McCann K, Hastings A. 2023. Stable diverse food webs become more common when interactions are more biologically constrained. Proceedings of the National Academy of Sciences 120:e2212061120. DOI: 10.1073/pnas.2212061120.
+#' * Gellner G, McCann K, Hastings A. 2023. Stable diverse food webs become 
+#' more common when interactions are more biologically constrained. Proceedings 
+#' of the National Academy of Sciences 120:e2212061120. DOI: 10.1073/pnas.2212061120.
 #'
 #' @export
 fw_infer <- function(A, R, B, eff_max = 1, sdB = NULL, ...) {
@@ -35,11 +38,39 @@ fw_infer <- function(A, R, B, eff_max = 1, sdB = NULL, ...) {
     U <- get_U(A)
     stopifnot(nrow(U) > 0)
     if (!is.null(sdB)) {
-        return(wrap_xsample_AB(A, B, R, U, sdB, eff_max = eff_max, ...))
+        out <- wrap_xsample_AB(A, B, R, U, sdB, eff_max = eff_max, ...)
     } else {
-        return(wrap_xsample(A, B, R, U, eff_max = eff_max, ...))
+        out <- wrap_xsample(A, B, R, U, eff_max = eff_max, ...)
     }
+    return(structure(out, class = c("fw_predicted_int", class(out))))
 }
+
+# get interaction matrix from one result
+#' @describeIn fw_infer returns predicted A.
+#' @param x an object of class `fw_predicted_int`
+#' @export
+fw_get_A_predicted <- function(x, A) {
+    stopifnot(inherits(x, "fw_predicted_int"))
+    U <- get_U(A)
+    x <- x |> 
+        dplyr::select(!leading_ev)
+    stopifnot(length(x) == nrow(U))
+    AA <- (A > 0) - (A < 0)
+    out <- AA * 0
+    for (i in seq_len(nrow(U))) {
+        out[U[i, 1], U[i, 2]] <- as.numeric(x[i]) * AA[U[i, 1], U[i, 2]]
+    }
+    out
+}
+
+# get Bodymass vector from one result
+#' @describeIn fw_infer returns predicted B.
+#' @export
+fw_get_B_predicted <- function(x, A, R) {
+    U <- get_U(A)
+    limSolve::lsei(E = fw_get_A_predicted(x, A), F = -R)$X
+}
+
 
 
 # edge list: matrix p x 2 where p is is the number of non-0 interactions,
@@ -116,10 +147,10 @@ wrap_xsample <- function(A, B, R, U, eff_max = 1, mod = mod_lv_fr1, ...) {
         limSolve::xsample,
         c(get_E_F(A = AA, B = B, R = R), get_G_H(AA, eff_max), ...)
     )
-    out <- tmp$X |> as.data.frame()
-
+    out <- tmp$X |> 
+        as.data.frame()
+    names(out) <- paste0("a_", apply(U, 1, paste, collapse = "_"))
     out$leading_ev <- get_xsample_stab(out, AA, B, R, U, mod = mod)
-
     return(out)
 }
 
@@ -133,28 +164,11 @@ wrap_xsample_AB <- function(A, B, R, U, sdB, eff_max = 1, mod = mod_lv_fr1, ...)
         limSolve::xsample,
         c(ls_AB, get_G_H(AA, eff_max), ...)
     )
-    out <- tmp$X |> as.data.frame()
-
+    out <- tmp$X |> 
+        as.data.frame()
+    names(out) <- paste0("a_", apply(U, 1, paste, collapse = "_"))
     out$leading_ev <- get_xsample_stab(out, AA, B, R, U, mod = mod)
-
     return(out)
-}
-
-# get interaction matrix from one result
-get_A_from_res <- function(x, A) {
-    U <- get_U(A)
-    stopifnot(length(x) == nrow(U))
-    AA <- (A > 0) - (A < 0)
-    out <- AA * 0
-    for (i in seq_len(nrow(U))) {
-        out[U[i, 1], U[i, 2]] <- as.numeric(x[i]) * AA[U[i, 1], U[i, 2]]
-    }
-    out
-}
-# get Bodymass vector from one result
-get_B_from_res <- function(x, A, R) {
-    U <- get_U(A)
-    limSolve::lsei(E = get_A_from_res(x, A), F = -R)$X
 }
 
 get_jacobian <- function(A, B, R, mod = mod_lv_fr1) {
@@ -192,9 +206,4 @@ get_xsample_stab <- function(X, A, B, R, U, mod = mod_lv_fr1) {
         mod = mod
     )
     return(out)
-}
-
-## Compute model with functional response type I
-mod_lv_fr1 <- function(t, y, pars) {
-    return(list((pars$A %*% y + pars$R) * y))
 }

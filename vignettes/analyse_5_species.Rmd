@@ -1,0 +1,100 @@
+---
+title: "Use fwebinfr to infer interactions with 5 species"
+author: "Kevin Cazelles"
+date: 17-01-2024
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Use fwebinfr to infer interactions with 5 species}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+# System 
+
+```{R setup, message = FALSE}
+library(fwebinfr)
+library(ggplot2)
+library(ggraph)
+library(patchwork)
+library(tidygraph)
+val <- fwebinfr:::fw_gen_5sp_2chains_01(add_sdB = FALSE)
+```
+
+Interaction matrix
+
+```{R}
+val$A
+```
+
+Plot system
+
+```{R plot, echo = FALSE, warning = FALSE}
+tmp <- val$A
+tmp[tmp<0] <- 0
+grph <- tmp |> 
+    as_tbl_graph() |>
+    mutate(name = paste0("spc_", 1:5))  |>
+    activate(edges)
+p1 <- ggraph(grph, layout = "auto") +
+    geom_edge_fan(show.legend = FALSE) +
+    geom_node_point(colour = c(3, 2, 2, 1, 1), size = 10) + 
+    theme_graph(foreground = "steelblue", fg_text_colour = "white")
+print(p1)
+```
+
+
+Inference
+
+```{R infer}
+res <- val |> do.call(what = "fw_infer")
+head(res)
+```
+
+```{R boxplot}
+res_long  <- res |>
+  tidyr::pivot_longer(everything(), values_to = "val", names_to = "var") 
+res_long |>
+  dplyr::filter(var != "leading_ev") |>
+  ggplot() +
+  geom_boxplot(aes(x = var, y = val)) +
+  scale_y_continuous(trans = "log10") +
+  ggtitle("Interactions")
+```
+
+Range stability 
+
+```{R boxplot_stab}
+res_long |>
+  dplyr::filter(var == "leading_ev") |>
+  ggplot() +
+  geom_boxplot(aes(x = var, y = val)) +
+  ggtitle("Leading eigen value")
+```
+
+
+
+```{R visualize, fig.height = 10}
+p1 <- fwebinfr:::quick_ode_plot(
+  fwebinfr:::mod_lv_fr1, val$B/1.5, seq(0, 2, 0.0001),
+  pars = list(
+    A = fwebinfr::fw_get_A_predicted(res[which.min(res$leading_ev), ], val$A),
+    B = fwebinfr::fw_get_B_predicted(res[which.min(res$leading_ev), ], val$A, val$R),
+    R = val$R
+  )
+) + 
+ggtitle("Minimum leading eigen value") +
+scale_y_continuous(trans = "log10")
+
+p2 <- fwebinfr:::quick_ode_plot(
+  fwebinfr:::mod_lv_fr1, val$B/1.5, seq(0, 10, 0.00001),
+  pars = list(
+    A = fwebinfr::fw_get_A_predicted(res[which.max(res$leading_ev), ], val$A),
+    B = fwebinfr::fw_get_B_predicted(res[which.max(res$leading_ev), ], val$A, val$R),
+    R = val$R
+  )
+) + 
+ggtitle("Maximum leading eigen value") +
+scale_y_continuous(trans = "log10")
+p1 / p2
+```

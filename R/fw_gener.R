@@ -14,9 +14,13 @@ fw_gen_ex1 <- function() {
     return(list(A = A, B = B, R = R))
 }
 
-# fw_gen_5sp_2chains_01() |> do.call(what = "fw_infer")
+# val <- fw_gen_5sp_2chains_01(add_sdB = FALSE)
+# res <- val |> do.call(what = "fw_infer")
 fw_gen_5sp_2chains_01 <- function(add_sdB = TRUE) {
     A <- matrix(0, 5, 5)
+    A[1, 1] <- -1
+    A[2, 2] <- -1
+    
     A[1, 3] <- -1
     A[2, 4] <- -1
 
@@ -29,10 +33,6 @@ fw_gen_5sp_2chains_01 <- function(add_sdB = TRUE) {
     A[5, 3] <- 1
     A[5, 4] <- 1
 
-    # R <- c(500, 100, -50, -200, -1000)
-    # B <- c(1000, 500, 500, 200, 1)
-    # R <- c(500, 100, -500, -100, -1000)
-    # B <- c(10000, 1000, 200, 100, 1)
     R <- c(500, 100, -500, -100, -1000)
     B <- c(10000, 1000, 200, 100, 20)
     out <- list(A = A, B = B, R = R)
@@ -40,6 +40,9 @@ fw_gen_5sp_2chains_01 <- function(add_sdB = TRUE) {
     return(out)
 }
 
+# val <- fw_gen_3sp_01() 
+# res <- val |> do.call(what = "fw_infer")
+# get_B_from_res(res, )
 fw_gen_3sp_01 <- function() {
     A <- matrix(0, 3, 3)
     A[1, 1] <- -0.1
