@@ -17,7 +17,3 @@ quick_ode_plot <- function(fun, init, times, pars) {
 }
 
 
-## Compute model with functional response type I
-mod_lv_fr1 <- function(t, y, pars) {
-    return(list((pars$A %*% y + pars$R) * y))
-}

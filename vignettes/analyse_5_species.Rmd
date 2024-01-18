@@ -44,7 +44,7 @@ print(p1)
 ```
 
 
-Inference
+# Inference
 
 ```{R infer}
 res <- val |> do.call(what = "fw_infer")
@@ -98,3 +98,15 @@ ggtitle("Maximum leading eigen value") +
 scale_y_continuous(trans = "log10")
 p1 / p2
 ```
+
+
+# With variability on B
+
+```{R, fig.height = 10}
+# does not work -- weirdly
+# val2 <- fwebinfr:::fw_gen_5sp_2chains_01(add_sdB = TRUE)
+# res2 <- val2 |> do.call(what = "fw_infer")
+# head(res2)
+```
+
+

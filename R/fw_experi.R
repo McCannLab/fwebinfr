@@ -102,14 +102,14 @@ run_experim02 <- function(eff_max = 1) {
     a_31 <- -0.5*a_13
     a_35 <- -seq(0.01, 0.1, length.out = n)
     a_53 <- -0.5 * a_35
-    par0  <- fw_gen_parms_exper2()
+    par0 <- fw_gen_5sp_2chains_01()
     res_A <- res_B <- res_xsample <- list()
 
     cli::cli_progress_bar("increases one channel",
         total = n,
         type = "iterator"
     )
-    for (i in seq_len(10)) {
+    for (i in seq_len(n)) {
         A <- par0$A
         A[1, 3] <- a_13[i]
         A[3, 1] <- a_31[i]

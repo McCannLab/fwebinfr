@@ -52,7 +52,7 @@ dim(res)
 head(res)
 ```
 
-Visuaizs values ranges
+Visualize values ranges
 
 ```{R res}
 summary(res)

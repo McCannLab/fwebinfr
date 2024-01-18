@@ -6,11 +6,11 @@
 \alias{fw_get_B_predicted}
 \title{Estimate interaction strengths}
 \usage{
-fw_infer(A, R, B, eff_max = 1, sdB = NULL, ...)
+fw_infer(A, R, B, U = NULL, eff_max = 1, sdB = NULL, ...)
 
-fw_get_A_predicted(x, A)
+fw_get_A_predicted(x, A, U = NULL)
 
-fw_get_B_predicted(x, A, R)
+fw_get_B_predicted(x, A, R, U = NULL)
 }
 \arguments{
 \item{A}{interaction matrix. Either a signed matrix (0/-1/1) or a matrix
@@ -20,6 +20,8 @@ one.}
 \item{R}{reproduction/mortality vector.}
 
 \item{B}{biomass vector.}
+
+\item{U}{unknow matrix. A two-columns matrix that includes unknowm column.}
 
 \item{eff_max}{maximum transfer efficiency.}
 

@@ -12,7 +12,7 @@ test_that("get_E_F works", {
 })
 
 
-test_that("get_U works", {
+test_that("get_U() works", {
     res <- get_U(A)
     expect_identical(
         res, 
@@ -32,6 +32,26 @@ test_that("get_U works", {
             dim = c(2L, 2L),
             dimnames = list(NULL, c("row", "col"))
         )
+    )
+})
+
+test_that("check_U() works", {
+    expect_identical(check_U(get_U(A), A), get_U(A))
+    expect_error(
+        check_U("a", A), 
+        'inherits(U, "matrix") is not TRUE', 
+        fixed = TRUE
+    )
+    expect_error(
+        check_U(matrix(0, 3, 3), A), 
+        'ncol(U) == 2 is not TRUE',
+        fixed = TRUE
+    )
+    U <- rbind(c(1, 2), c(1, 3))
+    expect_error(
+        check_U(U, A),
+        "all(U[, 2L] %in% seq_len(ncol(A))) is not TRUE",
+        fixed = TRUE
     )
 })
 

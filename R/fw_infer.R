@@ -7,6 +7,7 @@
 #' one.
 #' @param R reproduction/mortality vector.
 #' @param B biomass vector.
+#' @param U unknow matrix. A two-columns matrix that includes unknowm column.
 #' @param sdB vector of standard deviation biomass (see [limSolve::xsample()]).
 #' @param eff_max maximum transfer efficiency.
 #' @param ... further arguments passed to [limSolve::xsample()]).
@@ -28,15 +29,15 @@
 #' of the National Academy of Sciences 120:e2212061120. DOI: 10.1073/pnas.2212061120.
 #'
 #' @export
-fw_infer <- function(A, R, B, eff_max = 1, sdB = NULL, ...) {
+fw_infer <- function(A, R, B, U = NULL, eff_max = 1, sdB = NULL, ...) {
     stopifnot(exprs = {
         inherits(A, "matrix")
         NROW(A) == NCOL(A)
         NROW(A) == length(R)
         length(B) == length(R)
     })
-    U <- get_U(A)
-    stopifnot(nrow(U) > 0)
+    U <- check_U(U, A)
+
     if (!is.null(sdB)) {
         out <- wrap_xsample_AB(A, B, R, U, sdB, eff_max = eff_max, ...)
     } else {
@@ -49,9 +50,9 @@ fw_infer <- function(A, R, B, eff_max = 1, sdB = NULL, ...) {
 #' @describeIn fw_infer returns predicted A.
 #' @param x an object of class `fw_predicted_int`
 #' @export
-fw_get_A_predicted <- function(x, A) {
+fw_get_A_predicted <- function(x, A, U = NULL) {
     stopifnot(inherits(x, "fw_predicted_int"))
-    U <- get_U(A)
+    U <- check_U(U, A)
     x <- x |> 
         dplyr::select(!leading_ev)
     stopifnot(length(x) == nrow(U))
@@ -66,9 +67,9 @@ fw_get_A_predicted <- function(x, A) {
 # get Bodymass vector from one result
 #' @describeIn fw_infer returns predicted B.
 #' @export
-fw_get_B_predicted <- function(x, A, R) {
-    U <- get_U(A)
-    limSolve::lsei(E = fw_get_A_predicted(x, A), F = -R)$X
+fw_get_B_predicted <- function(x, A, R, U = NULL) {
+    U <- check_U(U, A)
+    limSolve::lsei(E = fw_get_A_predicted(x, A, U), F = -R)$X
 }
 
 
@@ -80,12 +81,29 @@ get_U <- function(A) {
     return(which(A != 0, arr.ind = TRUE))
 }
 
+check_U <- function(U, A) {
+    if (is.null(U)) {
+        U <- get_U(A)
+    }
+    stopifnot(exprs = {
+        inherits(U, "matrix")
+        nrow(U) > 0
+        ncol(U) == 2
+    })
+    colnames(U) <- c("row", "col")
+    stopifnot(exprs = {
+        all(U[, 1L] %in% seq_len(nrow(A)))
+        all(U[, 2L] %in% seq_len(ncol(A)))
+    })
+    U
+}
+
 get_E_F <- function(A, B, R) {
-    nr <- NROW(A)
+    nr <- nrow(A)
     # determine the number of unknown interaction to be searched for
     # matrix U gives the coordinates of non-null interactions in A
     U <- get_U(A)
-    ni <- NROW(U)
+    ni <- nrow(U)
 
     # foodweb interaction gives a first set of constrains
     E_fw <- matrix(0, nr, ni)
@@ -132,7 +150,7 @@ get_G_H <- function(A, eff_max = 1) {
         H_sym <- matrix(0, ncol = 1, nrow = NROW(G_sym))
     }
 
-    # All interaction are positive
+    # All interactions are positive
     G_pos <- diag(1, ni)
     H_pos <- matrix(0, ncol = 1, nrow = ni)
 
