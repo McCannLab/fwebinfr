@@ -1,11 +1,14 @@
 # Project-specific folder 
 *.xlsx
 .~lock.*
+.vscode
 _targets
 notebook.md
 tmp
 fig
 pres
+*.o
+*.so
 
 # History files
 .Rhistory
