@@ -6,6 +6,22 @@
 \usage{
 webFromNicheModel(nsp, connec, niche, connect_all = FALSE, unbias = FALSE)
 }
+\arguments{
+\item{nsp}{An integer giving the number of species considered.}
+
+\item{connec}{A real positive between 0 and .5 indicating the
+connectance of the network to be generated.}
+
+\item{niche}{A vector real positive between 0 and 1 standing for the niche
+axis. Default is set to \code{NULL}, in such case the niche axis is automatically
+generated.}
+
+\item{connect_all}{Logical. If \code{TRUE}, then all species in the network have a
+least one prey (but the niche with the lowest niche value).}
+
+\item{unbias}{Logical. If \code{TRUE}, then the first species may not be a basal
+species.}
+}
 \description{
 Core implementation of the niche model.
 }

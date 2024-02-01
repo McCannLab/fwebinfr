@@ -1,27 +1,29 @@
 #' Numerical experiments
-#' 
+#'
 #' @importFrom grDevices dev.off png
 #' @importFrom graphics abline boxplot legend lines par
 #' @export
 
 fw_list_experim <- function() {
     val <- c("run_experim01", "get_fig_exp_1", "run_experim02")
-    ul  <- cli::cli_ul()
+    ul <- cli::cli_ul()
     cli::cli_li()
     cli::cli_end(ul)
 }
 
 
 
-#' @describeIn fw_list_experim First experiment 
+#' @describeIn fw_list_experim First experiment
 #' @param eff_max maximum transfer efficiency.
 #' @export
 run_experim01 <- function(eff_max = 1) {
     a_21 <- seq(0.055, 0.15, 0.005)
     res_A <- res_B <- res_xsample <- res_stab <- list()
 
-    cli::cli_progress_bar("a_21 increases", total = length(a_21), 
-        type = "iterator")
+    cli::cli_progress_bar("a_21 increases",
+        total = length(a_21),
+        type = "iterator"
+    )
     for (i in seq(a_21)) {
         A <- matrix(0, 2, 2)
         A[1, 1] <- -0.1
@@ -49,7 +51,7 @@ run_experim01 <- function(eff_max = 1) {
 
 #' @describeIn fw_list_experim First experiment with three different eff_max
 #' @param output_dir output directory
-#' @export 
+#' @export
 get_fig_exp_1 <- function(output_dir = ".") {
     ttl <- c("eff_max_1.png", "eff_max_2.png", "eff_max_0_75.png")
 
@@ -96,10 +98,9 @@ get_fig_exp_1 <- function(output_dir = ".") {
 #--------- Figure 3 species
 
 run_experim02 <- function(eff_max = 1) {
-
-    n  <- 10
+    n <- 10
     a_13 <- -seq(0.01, 0.1, length.out = n)
-    a_31 <- -0.5*a_13
+    a_31 <- -0.5 * a_13
     a_35 <- -seq(0.01, 0.1, length.out = n)
     a_53 <- -0.5 * a_35
     par0 <- fw_gen_5sp_2chains_01()

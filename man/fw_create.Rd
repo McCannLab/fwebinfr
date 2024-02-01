@@ -4,32 +4,59 @@
 \alias{fw_create}
 \title{Create Foodweb model object}
 \usage{
-fw_create(A, B, R, U = NULL, sdB = NULL)
+fw_create(A, B, R, S = NULL, U = NULL, sdB = NULL)
 }
 \arguments{
-\item{A}{interaction matrix. Either a signed matrix (0/-1/1) or a matrix
-with coefficients. In both cases the matrix is currently treated as a signed
-one.}
+\item{A}{interaction matrix. A square matrix describing interactions of the
+system (see details).}
 
 \item{B}{biomass vector.}
 
 \item{R}{reproduction/mortality vector.}
 
-\item{U}{unknow matrix. A two-columns matrix that includes unknowm column.}
+\item{S}{a square matrix describing the sign structure of the system. It
+must have the same dimension of A and only includes 0, -1 and 1. If \code{NULL}, S
+is derived from A.}
+
+\item{U}{unknow matrix. A two-columns matrix that includes the position of unknown interaction.
+If \code{NULL}, U is derived from A.}
 
 \item{sdB}{vector of standard deviation biomass (see \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
 }
 \value{
-An object of class \code{class} which is a named list of 6 elements:
+An object of class \code{fwmod} which is a named list of 7 elements:
 \itemize{
-\item A
-\item B
-\item R
-\item U
-\item SdB
+\item A: interaction matrix
+\item B: biomass vector
+\item R: mortality rate vector
+\item U: unknown interaction
+\item S: signed structure matrix
+\item SdB: biomass variation
 \item model: the underlying model
 }
 }
 \description{
-Create Foodweb model object
+Create a object of class \code{fwmod} that can be used for interaction inference.
+}
+\details{
+In most cases, only \code{A} needs to be defined and should include:
+\itemize{
+\item 1 when interactions are present and positve,
+\item -1 when interactions are present and negative,
+\item 0 otherwise.
+Matrix \code{A} will be used to generate \code{S} and \code{U}.
+\code{A} may also includes known interactions that need not be infered. In such
+case U must be defined accordingly. Similarly, if A only includes
+interaction without their sign, S must be defined properly to perform the
+correct inference.
+TODO: S may not be required is U has signed info, or U may not be required if
+S points to only unknown info.
+}
+}
+\examples{
+A <- rbind(c(-1, -1), c(1, 0))
+R <- c(0.1, -0.05)
+B <- c(0.5, 0.25)
+fw_create(A, B, R)
+
 }

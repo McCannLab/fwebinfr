@@ -5,6 +5,17 @@
 #'
 #' @title Core implementation of the niche model.
 #'
+#' @param nsp An integer giving the number of species considered.
+#' @param connec A real positive between 0 and .5 indicating the
+#' connectance of the network to be generated.
+#' @param connect_all Logical. If `TRUE`, then all species in the network have a
+#' least one prey (but the niche with the lowest niche value).
+#' @param unbias Logical. If `TRUE`, then the first species may not be a basal
+#' species.
+#' @param niche A vector real positive between 0 and 1 standing for the niche
+#' axis. Default is set to `NULL`, in such case the niche axis is automatically
+#' generated.
+#'
 #' @importFrom Rcpp evalCpp
 #'
 webFromNicheModel <- function(nsp, connec, niche, connect_all = FALSE, unbias = FALSE) {

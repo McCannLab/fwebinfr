@@ -7,8 +7,8 @@
 #'   - a value of connectance.
 #'
 #' @param nsp An integer giving the number of species considered.
-#' @param connec A real positive between 0 and .5 indicating the connectance
-#' of the network to be generated.
+#' @param connectance A real positive between 0 and .5 indicating the 
+#' connectance of the network to be generated.
 #' @param connect_all Logical. If `TRUE`, then all species in the network have a
 #' least one prey (but the niche with the lowest niche value).
 #' @param unbias Logical. If `TRUE`, then the first species may not be a basal 
@@ -45,7 +45,7 @@ fw_niche_model <- function(nsp, connectance, connect_all = FALSE,
                            unbias = FALSE, niche = NULL) {
     stopifnot(connectance > 0 && connectance < 0.5)
     if (is.null(niche)) {
-        niche <- runif(nsp, 0, 1)
+        niche <-stats::runif(nsp, 0, 1)
     } else {
         cli::cli_alert_info("custom `niche` used, connectance may be biased")
         stopifnot(all(niche > 0 & niche < 1))
