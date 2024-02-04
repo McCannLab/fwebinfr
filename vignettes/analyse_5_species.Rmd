@@ -1,7 +1,7 @@
 ---
 title: "Use fwebinfr to infer interactions with 5 species"
 author: "Kevin Cazelles"
-date: 17-01-2024
+date: 03-02-2024
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Use fwebinfr to infer interactions with 5 species}
@@ -18,19 +18,19 @@ library(ggplot2)
 library(ggraph)
 library(patchwork)
 library(tidygraph)
-val <- fwebinfr:::fw_gen_5sp_2chains_01(add_sdB = FALSE)
+net <- fw_example_5species_2chains()
 ```
 
 Interaction matrix
 
 ```{R}
-val$A
+net
 ```
 
 Plot system
 
 ```{R plot, echo = FALSE, warning = FALSE}
-tmp <- val$A
+tmp <- net$A
 tmp[tmp<0] <- 0
 grph <- tmp |> 
     as_tbl_graph() |>
@@ -46,67 +46,36 @@ print(p1)
 
 # Inference
 
+Now we call `fw_infer()` to predict interaction strengths.
+
 ```{R infer}
-res <- val |> do.call(what = "fw_infer")
-head(res)
+res <- fw_infer(net)
+head(res$prediction)
 ```
+
+Let's visualize the range of interaction stregth and stability.
 
 ```{R boxplot}
-res_long  <- res |>
-  tidyr::pivot_longer(everything(), values_to = "val", names_to = "var") 
-res_long |>
-  dplyr::filter(var != "leading_ev") |>
-  ggplot() +
-  geom_boxplot(aes(x = var, y = val)) +
-  scale_y_continuous(trans = "log10") +
-  ggtitle("Interactions")
+fw_range_plot(res)
 ```
 
-Range stability 
-
-```{R boxplot_stab}
-res_long |>
-  dplyr::filter(var == "leading_ev") |>
-  ggplot() +
-  geom_boxplot(aes(x = var, y = val)) +
-  ggtitle("Leading eigen value")
-```
-
-
+Bow let's plot the dynamic for
 
 ```{R visualize, fig.height = 10}
-p1 <- fwebinfr:::quick_ode_plot(
-  fwebinfr:::mod_lv_fr1, val$B/1.5, seq(0, 2, 0.0001),
-  pars = list(
-    A = fwebinfr::fw_get_A_predicted(res[which.min(res$leading_ev), ], val$A),
-    B = fwebinfr::fw_get_B_predicted(res[which.min(res$leading_ev), ], val$A, val$R),
-    R = val$R
-  )
-) + 
-ggtitle("Minimum leading eigen value") +
-scale_y_continuous(trans = "log10")
+net_most_stable <- fw_model(
+  A = fw_predict_A(res, which.min(res$prediction$leading_ev)),
+  B = fw_predict_B(res, which.min(res$prediction$leading_ev)),
+  R = net$R
+)
+net_least_stable <- fw_model(
+  A = fw_predict_A(res, which.max(res$prediction$leading_ev)),
+  B = fw_predict_B(res, which.max(res$prediction$leading_ev)),
+  R = net$R
+)
 
-p2 <- fwebinfr:::quick_ode_plot(
-  fwebinfr:::mod_lv_fr1, val$B/1.5, seq(0, 10, 0.00001),
-  pars = list(
-    A = fwebinfr::fw_get_A_predicted(res[which.max(res$leading_ev), ], val$A),
-    B = fwebinfr::fw_get_B_predicted(res[which.max(res$leading_ev), ], val$A, val$R),
-    R = val$R
-  )
-) + 
-ggtitle("Maximum leading eigen value") +
-scale_y_continuous(trans = "log10")
+p1 <- fw_ode_plot(net_most_stable, net$B/1.5, seq(0, 2, 0.0001)) +
+  ggtitle("Minimum leading eigen value (most stable)") 
+p2 <- fw_ode_plot(net_least_stable, net$B/1.5, seq(0, 2, 0.0001)) +
+  ggtitle("Maximum leading eigen value (least stable)")
 p1 / p2
 ```
-
-
-# With variability on B
-
-```{R, fig.height = 10}
-# does not work -- weirdly
-# val2 <- fwebinfr:::fw_gen_5sp_2chains_01(add_sdB = TRUE)
-# res2 <- val2 |> do.call(what = "fw_infer")
-# head(res2)
-```
-
-

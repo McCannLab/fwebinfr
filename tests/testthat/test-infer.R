@@ -9,8 +9,8 @@ test_that("get_E_F works", {
 })
 
 
-test_that("get_U() works", {
-    res <- get_U(A)
+test_that("get_U_from_A() works", {
+    res <- get_U_from_A(A)
     expect_identical(
         res, 
         structure(
@@ -21,7 +21,7 @@ test_that("get_U() works", {
     )
     AA <- A
     AA[1, 2] <- 0
-    res <- get_U(AA)
+    res <- get_U_from_A(AA)
     expect_identical(
         res,
         structure(
@@ -38,26 +38,33 @@ test_that("get_G_H works", {
     expect_equal(res$H, matrix(0, nrow = 4))
 })
 
-test_that("fw_infer() format errors", {
-    expect_error(fw_infer("wrong", R, B, 1))
-    expect_error(fw_infer(A, R, c(B, 1), 1))
-    expect_error(fw_infer(diag(0, 2), R, B, 1))
-    expect_error(fw_infer(diag(3), R, B, 1))
-})
-
 
 test_that("fw_infer() works", {
+    expect_error(
+        fw_infer("wrong"), 
+        'inherits(x, "fw_problem") is not TRUE',
+        fixed = TRUE
+    )
     suppressWarnings({
-        res1 <- fw_infer(A, R, B)
-        res2 <- fw_infer(A, R, B, iter = 1000)
+        res1 <- fw_problem(A, B, R) |> fw_infer()
+        prb <- fw_problem(A, B, R)
+        res2 <- fw_infer(prb, iter = 1000)
     })
-    expect_true(inherits(res1, "data.frame"))
-    expect_true(inherits(res1, "fw_predicted_int"))
-    expect_true(all(res1$leading_ev < 0))
-    expect_identical(dim(res1), c(3000L, 4L))
-    expect_identical(dim(res2), c(1000L, 4L))
-    expect_error(fw_get_B_predicted(data.frame(1), A, R))
-    expect_equal(fw_get_B_predicted(res1[1, ], A, R), B)
-    res3 <- fw_get_A_predicted(res1[1, ], A)
+    expect_true(inherits(res1, "fw_predicted"))
+    expect_true(inherits(unclass(res1), "list"))
+    expect_identical(res1$problem, prb)
+    expect_identical(dim(res1$prediction), c(3000L, 4L))
+    expect_identical(dim(res2$prediction), c(1000L, 4L))
+    expect_true(all(res1$prediction$leading_ev < 0))
+    expect_error(
+        fw_predict_B(
+            "wrong",
+            'inherits(y, "fw_predicted") is not TRUE',
+            fixed = TRUE
+        )
+    )
+    expect_equal(fw_predict_B(res1, 1), B)
+    expect_equal(fw_predict_B(res1, 100), B)
+    res3 <- fw_predict_A(res1, 1)
     expect_identical((res3 > 0) * 1.0 - (res3 < 0) * 1.0, A)
 })

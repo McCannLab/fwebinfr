@@ -2,14 +2,8 @@
 #'
 #' Function to estimate interaction strengths using LIM.
 #'
-#' @param A interaction matrix. Either a signed matrix (0/-1/1) or a matrix
-#' with coefficients. In both cases the matrix is currently treated as a signed
-#' one.
-#' @param R reproduction/mortality vector.
-#' @param B biomass vector.
-#' @param U unknow matrix. A two-columns matrix that includes unknowm column.
-#' @param sdB vector of standard deviation biomass (see [limSolve::xsample()]).
-#' @param eff_max maximum transfer efficiency.
+#' @param x an object of class `fw_problem`.
+#' @param eff_max max efficience. 
 #' @param ... further arguments passed to [limSolve::xsample()]).
 #'
 #' @details
@@ -19,9 +13,10 @@
 #' See [limSolve::xsample()] for the meaning of matrices E, F, G and H.
 #'
 #' @return
-#' Return a data frame with one column per interaction strength estimated in
-#' A (i.e. one per 1 or -1 in A). The number of row is given by the number of
-#' interaction estimated by `xsample()` (see parameter `iter` in `xsample()`).
+#' Return a list of two elements: 
+#'  * `prediction`: a data frame with one column per interaction strength 
+#' estimated. The number of row is given by the number of interaction sets 
+#' estimated by `xsample()` (see parameter `iter` in `xsample()`).
 #'
 #' @references
 #' * Gellner G, McCann K, Hastings A. 2023. Stable diverse food webs become
@@ -29,37 +24,44 @@
 #' of the National Academy of Sciences 120:e2212061120. DOI: 10.1073/pnas.2212061120.
 #'
 #' @export
-fw_infer <- function(A, R, B, U = NULL, eff_max = 1, sdB = NULL, ...) {
-    stopifnot(exprs = {
-        inherits(A, "matrix")
-        NROW(A) == NCOL(A)
-        NROW(A) == length(R)
-        length(B) == length(R)
-    })
-    U <- check_U(U, A)
+#' 
+#' @examples
+#' A <- rbind(c(-1, -1), c(1, 0))
+#' R <- c(0.1, -0.05)
+#' B <- c(0.5, 0.25)
+#' res  <- fw_problem(A, B, R) |> fw_infer()
+#' 
+fw_infer <- function(x, eff_max = 1, ...) {
+    stopifnot(inherits(x, "fw_problem"))
 
-    if (!is.null(sdB)) {
-        out <- wrap_xsample_AB(A, B, R, U, sdB, eff_max = eff_max, ...)
+    if (!is.null(x$sdB)) {
+        out <- wrap_xsample_AB(x, eff_max = eff_max, ...)
     } else {
-        out <- wrap_xsample(A, B, R, U, eff_max = eff_max, ...)
+        out <- wrap_xsample(x, eff_max = eff_max, ...)
     }
-    return(structure(out, class = c("fw_predicted_int", class(out))))
+    return(
+        structure(
+            list(prediction = out, problem = x),
+            class = c("fw_predicted")
+        )
+    )
 }
 
 # get interaction matrix from one result
 #' @describeIn fw_infer returns predicted A.
-#' @param x an object of class `fw_predicted_int`
+#' @param y an object of class `fw_predicted`
+#' @param index index of the prediction to be used.
 #' @export
-fw_get_A_predicted <- function(x, A, U = NULL) {
-    stopifnot(inherits(x, "fw_predicted_int"))
-    U <- check_U(U, A)
-    x <- x |>
+fw_predict_A <- function(y, index = 1) {
+    stopifnot(inherits(y, "fw_predicted"))
+    x <- y$problem
+    y <- y$prediction[index, ] |>
         dplyr::select(!leading_ev)
-    stopifnot(length(x) == nrow(U))
-    AA <- (A > 0) - (A < 0)
-    out <- AA * 0
-    for (i in seq_len(nrow(U))) {
-        out[U[i, 1], U[i, 2]] <- as.numeric(x[i]) * AA[U[i, 1], U[i, 2]]
+    stopifnot(length(y) == nrow(x$U))
+
+    out <- x$S * 0
+    for (i in seq_len(nrow(x$U))) {
+        out[x$U[i, 1], x$U[i, 2]] <- as.numeric(y[i]) * x$S[x$U[i, 1], x$U[i, 2]]
     }
     out
 }
@@ -67,9 +69,8 @@ fw_get_A_predicted <- function(x, A, U = NULL) {
 # get Bodymass vector from one result
 #' @describeIn fw_infer returns predicted B.
 #' @export
-fw_get_B_predicted <- function(x, A, R, U = NULL) {
-    U <- check_U(U, A)
-    limSolve::lsei(E = fw_get_A_predicted(x, A, U), F = -R)$X
+fw_predict_B <- function(y, index = 1) {
+    limSolve::lsei(E = fw_predict_A(y, index), F = -y$problem$R)$X
 }
 
 
@@ -77,9 +78,9 @@ fw_get_B_predicted <- function(x, A, R, U = NULL) {
 
 get_E_F <- function(A, B, R) {
     nr <- nrow(A)
-    # determine the number of unknown interaction to be searched for
+    # determine the number of unknown interactions to be searched for
     # matrix U gives the coordinates of non-null interactions in A
-    U <- get_U(A)
+    U <- get_U_from_A(A)
     ni <- nrow(U)
 
     # foodweb interaction gives a first set of constrains
@@ -101,8 +102,8 @@ get_E_F <- function(A, B, R) {
 }
 
 get_G_H <- function(A, eff_max = 1) {
-    U <- get_U(A)
-    ni <- NROW(U) # number of interaction
+    U <- get_U_from_A(A)
+    ni <- NROW(U) # number of interaction to infer
     nr <- NROW(A) # number of spec
     # derive constraints using eff_max * a_{j,i} >= a_{i,j}
     # eff_max * a_{j,i} - a_{i,j} >= 0
@@ -134,35 +135,29 @@ get_G_H <- function(A, eff_max = 1) {
     return(list(G = rbind(G_sym, G_pos), H = rbind(H_sym, H_pos)))
 }
 
-wrap_xsample <- function(A, B, R, U, eff_max = 1, mod = mod_lv_fr1, ...) {
-    # we use A to know the real interactions but in the methods
-    # A takes 1, -1 or 0
-    AA <- (A > 0) - (A < 0)
+wrap_xsample <- function(x, eff_max = 1, ...) {
     tmp <- do.call(
         limSolve::xsample,
-        c(get_E_F(A = AA, B = B, R = R), get_G_H(AA, eff_max), ...)
+        c(get_E_F(A = x$S, B = x$B, R = x$R), get_G_H(x$S, eff_max), ...)
     )
-    out <- tmp$X |>
-        as.data.frame()
-    names(out) <- paste0("a_", apply(U, 1, paste, collapse = "_"))
-    out$leading_ev <- get_xsample_stab(out, AA, B, R, U, mod = mod)
+    out <- tmp$X |> as.data.frame()
+    names(out) <- paste0("a_", apply(x$U, 1, paste, collapse = "_"))
+    out$leading_ev <- get_xsample_stab(out, x$S, x$B, x$R, x$U, mod = x$model)
     return(out)
 }
 
-wrap_xsample_AB <- function(A, B, R, U, sdB, eff_max = 1, mod = mod_lv_fr1, ...) {
+wrap_xsample_AB <- function(x, eff_max = 1, ...) {
     # we use A to know the real interactions but in the methods
     # A takes 1, -1 or 0
-    AA <- (A > 0) - (A < 0)
-    tmp <- get_E_F(AA, B, R)
-    ls_AB <- list(A = tmp$E, B = tmp$F, sdB = sdB)
+    tmp <- get_E_F(x$S, x$B, x$R)
+    ls_AB <- list(A = tmp$E, B = tmp$F, sdB = x$sdB)
     tmp <- do.call(
         limSolve::xsample,
-        c(ls_AB, get_G_H(AA, eff_max), ...)
+        c(ls_AB, get_G_H(x$S, eff_max), ...)
     )
-    out <- tmp$X |>
-        as.data.frame()
-    names(out) <- paste0("a_", apply(U, 1, paste, collapse = "_"))
-    out$leading_ev <- get_xsample_stab(out, AA, B, R, U, mod = mod)
+    out <- tmp$X |> as.data.frame()
+    names(out) <- paste0("a_", apply(x$U, 1, paste, collapse = "_"))
+    out$leading_ev <- get_xsample_stab(out, x$S, x$B, x$R, x$U, mod = x$model)
     return(out)
 }
 

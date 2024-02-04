@@ -1,7 +1,7 @@
 Package: fwebinfr
 Title: Infer Food Webs Interactions
-Version: 0.0.1.9007
-Date: 2024-02-01
+Version: 0.0.1.9008
+Date: 2024-02-03
 Authors@R: 
     person(given = "Kevin",
            family = "Cazelles",
@@ -17,16 +17,16 @@ Imports:
     dplyr (>= 1.1),
     ggplot2 (>= 3.4),
     limSolve (>= 1.5),
+    patchwork (>= 1.2),
     Rcpp (>= 1.0.12),
     rootSolve (>= 1.8),
-    tidyr (>= 1.3),
     stats,
+    tidyr (>= 1.3),
     utils
 Suggests:
     curl,
     ggraph,
     knitr,
-    patchwork,
     readxl,
     rmarkdown,
     tarchetypes,

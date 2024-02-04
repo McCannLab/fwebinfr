@@ -103,7 +103,7 @@ run_experim02 <- function(eff_max = 1) {
     a_31 <- -0.5 * a_13
     a_35 <- -seq(0.01, 0.1, length.out = n)
     a_53 <- -0.5 * a_35
-    par0 <- fw_gen_5sp_2chains_01()
+    par0 <- fw_example_5species_2chains()
     res_A <- res_B <- res_xsample <- list()
 
     cli::cli_progress_bar("increases one channel",

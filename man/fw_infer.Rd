@@ -2,39 +2,34 @@
 % Please edit documentation in R/infer.R
 \name{fw_infer}
 \alias{fw_infer}
-\alias{fw_get_A_predicted}
-\alias{fw_get_B_predicted}
+\alias{fw_predict_A}
+\alias{fw_predict_B}
 \title{Estimate interaction strengths}
 \usage{
-fw_infer(A, R, B, U = NULL, eff_max = 1, sdB = NULL, ...)
+fw_infer(x, eff_max = 1, ...)
 
-fw_get_A_predicted(x, A, U = NULL)
+fw_predict_A(y, index = 1)
 
-fw_get_B_predicted(x, A, R, U = NULL)
+fw_predict_B(y, index = 1)
 }
 \arguments{
-\item{A}{interaction matrix. Either a signed matrix (0/-1/1) or a matrix
-with coefficients. In both cases the matrix is currently treated as a signed
-one.}
+\item{x}{an object of class \code{fw_problem}.}
 
-\item{R}{reproduction/mortality vector.}
-
-\item{B}{biomass vector.}
-
-\item{U}{unknow matrix. A two-columns matrix that includes unknowm column.}
-
-\item{eff_max}{maximum transfer efficiency.}
-
-\item{sdB}{vector of standard deviation biomass (see \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
+\item{eff_max}{max efficience.}
 
 \item{...}{further arguments passed to \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
 
-\item{x}{an object of class \code{fw_predicted_int}}
+\item{y}{an object of class \code{fw_predicted}}
+
+\item{index}{index of the prediction to be used.}
 }
 \value{
-Return a data frame with one column per interaction strength estimated in
-A (i.e. one per 1 or -1 in A). The number of row is given by the number of
-interaction estimated by \code{xsample()} (see parameter \code{iter} in \code{xsample()}).
+Return a list of two elements:
+\itemize{
+\item \code{prediction}: a data frame with one column per interaction strength
+estimated. The number of row is given by the number of interaction sets
+estimated by \code{xsample()} (see parameter \code{iter} in \code{xsample()}).
+}
 }
 \description{
 Function to estimate interaction strengths using LIM.
@@ -47,11 +42,18 @@ See \code{\link[limSolve:xsample]{limSolve::xsample()}} for the meaning of matri
 }
 \section{Functions}{
 \itemize{
-\item \code{fw_get_A_predicted()}: returns predicted A.
+\item \code{fw_predict_A()}: returns predicted A.
 
-\item \code{fw_get_B_predicted()}: returns predicted B.
+\item \code{fw_predict_B()}: returns predicted B.
 
 }}
+\examples{
+A <- rbind(c(-1, -1), c(1, 0))
+R <- c(0.1, -0.05)
+B <- c(0.5, 0.25)
+res  <- fw_problem(A, B, R) |> fw_infer()
+
+}
 \references{
 \itemize{
 \item Gellner G, McCann K, Hastings A. 2023. Stable diverse food webs become

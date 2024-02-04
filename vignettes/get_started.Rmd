@@ -1,7 +1,7 @@
 ---
 title: "Get started with fwebinfr"
 author: "Kevin Cazelles"
-date: 16-01-2024
+date: 03-02-2024
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Get started with fwebinfr}
@@ -20,65 +20,76 @@ library(ggplot2)
 library(patchwork)
 ```
 
-Then we use an example.
+This example is available in the package and is called using `fw_example_2species()`
 
 ```{R value}
-val <- fw_gen_ex1()
-val
+# a first example
+net <- fw_example_2species()
+net
 ```
 
-A quick visualisation of the dynamics. 
+It is a object of class `fw_model` that includes all details needed for the inference. For the sake of the example, matrix A contains the real interaction, by default, none will be used for the inference as there are interpreted as unkown according to atrix `U`. A quick visualisation of the dynamics. 
 
 ```{R plot}
-fwebinfr:::quick_ode_plot(
-    fwebinfr:::mod_lv_fr1, rep(0.3, 2), seq(1, 500, 0.1),
-    pars = val
-)
+fw_ode_plot(net, rep(0.3, 2), seq(1, 500, 0.1))
 ```
 
-Then we call `fw_infer()`.
+Then we call `fw_infer()` which requires an object of class `fw_problem` we obtain calling `fw_as_problem()`.
 
 ```{R compute}
-# custom parameter (see limSolve::xsample())
-pars <- c(
-    val,
-    burninlength = 5000,
-    iter = 5000,
-    type = "mirror"
-)
-res <- pars |>
-    do.call(what = "fw_infer")
-dim(res)
-head(res)
+res <- fw_infer(fw_as_problem(net), burninlength = 5000, iter = 5000, type = "mirror")
+class(res)
+dim(res$prediction)
+head(res$prediction)
 ```
 
-Visualize values ranges
+Note that here `burninlength` = 5000, `iter` and `type` are actually parameters passed to `limSolve::xsample()`. The output is an object of class `fw_predicted` which is a basic data frane, Here is a simple way to have an idea of the range of interaction strengths.
 
 ```{R res}
-summary(res)
-boxplot(res)
+fw_range_plot(res)
 ```
 
-Let's plot the dynamics for the system with the min and max leading eigen value. 
+Note that the real values fall within this range: 
+
+```R
+net$A
+```
+
+For any result, we can check the food web predicted:
+
+```R
+fw_predict_A(res, 1)
+fw_predict_A(res, 1000)
+```
+
+as well as the biomass (which should equal the one we provided).
+
+```R
+fw_predict_B(res, 1)
+fw_predict_B(res, 1000)
+```
+
+Let's plot the dynamics for the system with the min and max leading eigen value.
 
 
 ```{R compare1, fig.height = 10}
-p1 <- fwebinfr:::quick_ode_plot(
-  fwebinfr:::mod_lv_fr1, rep(0.3, 2), seq(1, 500, 0.1),
-  pars = list(
-    A = fwebinfr::fw_get_A_predicted(res[which.min(res$leading_ev), ], val$A),
-    B = fwebinfr::fw_get_B_predicted(res[which.min(res$leading_ev), ], val$A, val$R),
-    R = val$R
-  )
-) + ggtitle("Minimum leading eigen value")
+# we create one new `fw_problem` object with the most stable system and another one
+# with the the leas stable system. 
 
-p2 <- fwebinfr:::quick_ode_plot(
-  fwebinfr:::mod_lv_fr1, rep(0.3, 2), seq(1, 500, 0.1),
-  pars = list(
-    A = fwebinfr::fw_get_A_predicted(res[which.max(res$leading_ev), ], val$A),
-    B = fwebinfr::fw_get_B_predicted(res[which.max(res$leading_ev), ], val$A, val$R),
-    R = val$R
-  )
-) + ggtitle("Maximum leading eigen value")
+net_most_stable <- fw_model(
+  A = fw_predict_A(res, which.min(res$prediction$leading_ev)),
+  B = fw_predict_B(res, which.min(res$prediction$leading_ev)),
+  R = net$R
+)
+net_least_stable <- fw_model(
+    A = fw_predict_A(res, which.max(res$prediction$leading_ev)),
+    B = fw_predict_B(res, which.max(res$prediction$leading_ev)),
+    R = net$R
+)
+
+p1 <- fw_ode_plot(net_most_stable, rep(0.3, 2), seq(1, 500, 0.1)) + 
+  ggtitle("Minimum leading eigen value (most stable)")
+p2 <- fw_ode_plot(net_least_stable, rep(0.3, 2), seq(1, 500, 0.1)) +
+  ggtitle("Maximum leading eigen value (least stable)")
 p1 / p2
 ```

@@ -16,7 +16,7 @@ remotes::install_deps()
 # How to
 
 ```R
-val <- fw_gen_ex1()
+val <- fw_example_2species()
 pars <- c(
     val, 
     burninlength = 5000, 
