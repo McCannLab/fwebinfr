@@ -141,7 +141,10 @@ wrap_xsample <- function(x, eff_max = 1, ...) {
         c(get_E_F(A = x$S, B = x$B, R = x$R), get_G_H(x$S, eff_max), ...)
     )
     out <- tmp$X |> as.data.frame()
-    names(out) <- paste0("a_", apply(x$U, 1, paste, collapse = "_"))
+    names(out) <- paste0(
+        "a_", 
+        apply(x$U[c("row", "col")], 1, paste, collapse = "_")
+    )
     out$leading_ev <- get_xsample_stab(out, x$S, x$B, x$R, x$U, mod = x$model)
     return(out)
 }

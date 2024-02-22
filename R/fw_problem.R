@@ -17,8 +17,8 @@
 #'  * -1 when interactions are present and negative,
 #'  * 0 otherwise.
 #' `U` will be generated according to this these values. `A` may however
-#' includes known interactions, in such case, `U` needs to be defined and 
-#' must includes all known interactions (unknown interactions will be 
+#' includes known interactions, in such case, `U` needs to be defined and
+#' must includes all known interactions (unknown interactions will be
 #' identified using `A`).
 #' TODO: S may not be required if U has signed info, or U may not be required if
 #' S points to only unknown info. I think ultimately using an Edge list + Node
@@ -33,9 +33,9 @@
 #' * S: square matrix representing the signed structure (only 1/-1 and 0)
 #' * SdB: biomass variation
 #' * model: the underlying model
-#' 
+#'
 #' @export
-#' 
+#'
 #' @examples
 #' A <- rbind(c(-1, -1), c(1, 0))
 #' R <- c(0.1, -0.05)
@@ -43,16 +43,16 @@
 #' fw_problem(A, B, R)
 #'
 fw_problem <- function(A, B, R, U = NULL, sdB = NULL) {
-    x  <- new_fw_problem(A, B, R, U, sdB)
+    x <- new_fw_problem(A, B, R, U, sdB)
     validate_fw_problem(x)
 }
 
 #' @describeIn fw_problem Coerce an object to an object of class `fw_problem`.
 #' @param x an R object.
-#' @param ... extra arguments (ignored so far, might be use to custom xsample 
+#' @param ... extra arguments (ignored so far, might be use to custom xsample
 #' at some point).
-#' @export 
-fw_as_problem  <- function(x, ...) {
+#' @export
+fw_as_problem <- function(x, ...) {
     UseMethod("fw_as_problem")
 }
 
@@ -64,7 +64,7 @@ fw_as_problem.fw_problem <- function(x, ...) {
 #' @export
 fw_as_problem.fw_model <- function(x, ...) {
     validate_fw_model(x)
-    new_fw_problem(A = x$A, B = x$B, R = x$R, U = NULL, sdB = NULL)  |>
+    new_fw_problem(A = x$A, B = x$B, R = x$R, U = NULL, sdB = NULL) |>
         validate_fw_problem()
 }
 
@@ -87,7 +87,7 @@ create_U <- function(U, A) {
         colnames(U) <- c("row", "col")
         U$unknown <- TRUE
     } else {
-        U  <- validate_U(U, A)
+        U <- validate_U(U, A)
         # check whether they are additionnal unknown interactions
         U2 <- dplyr::setdiff(
             get_U_from_A(A) |> as.data.frame(),
@@ -128,7 +128,7 @@ validate_fw_problem <- function(x) {
     x
 }
 
-validate_U  <- function(U, A) {
+validate_U <- function(U, A) {
     stopifnot(exprs = {
         inherits(U, "data.frame")
         nrow(U) > 0
@@ -140,8 +140,8 @@ validate_U  <- function(U, A) {
 }
 
 validate_sdB <- function(sdB, B) {
-     if (!is.null(sdB)) {
-         stopifnot(length(sdB) == length(B))
-     }
-     sdB
+    if (!is.null(sdB)) {
+        stopifnot(length(sdB) == length(B))
+    }
+    sdB
 }

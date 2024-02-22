@@ -44,7 +44,13 @@ fw_range_plot <- function(y, include_stability = TRUE) {
         ggplot2::ggplot() +
         ggplot2::geom_boxplot(ggplot2::aes(x = var, y = val)) +
         ggplot2::scale_y_continuous(trans = "log10") +
-        ggplot2::ggtitle("Interactions")
+        ggplot2::ggtitle("Interaction strengths") +
+        ggplot2::theme(
+            axis.text.x = ggplot2::element_text(
+                angle = 90, vjust = 0.5, hjust = 1
+            )
+        )
+
 
     if (include_stability) {
         p2 <- y_long |>

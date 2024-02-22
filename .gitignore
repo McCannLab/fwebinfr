@@ -9,6 +9,7 @@ fig
 pres
 *.o
 *.so
+TODO.md
 
 # History files
 .Rhistory

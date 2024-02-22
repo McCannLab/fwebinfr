@@ -57,14 +57,14 @@ net$A
 
 For any result, we can check the food web predicted:
 
-```R
+```{R predictA}
 fw_predict_A(res, 1)
 fw_predict_A(res, 1000)
 ```
 
 as well as the biomass (which should equal the one we provided).
 
-```R
+```{R predictB}
 fw_predict_B(res, 1)
 fw_predict_B(res, 1000)
 ```

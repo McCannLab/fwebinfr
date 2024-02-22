@@ -52,6 +52,7 @@ test_that("fw_infer() works", {
     })
     expect_true(inherits(res1, "fw_predicted"))
     expect_true(inherits(unclass(res1), "list"))
+    expect_identical(names(res1), c("prediction", "problem"))
     expect_identical(res1$problem, prb)
     expect_identical(dim(res1$prediction), c(3000L, 4L))
     expect_identical(dim(res2$prediction), c(1000L, 4L))
