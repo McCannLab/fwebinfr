@@ -3,7 +3,7 @@
 #' Function to estimate interaction strengths using LIM.
 #'
 #' @param x an object of class `fw_problem`.
-#' @param eff_max max efficience. 
+#' @param eff_max max efficiency.
 #' @param ... further arguments passed to [limSolve::xsample()]).
 #'
 #' @details
@@ -13,9 +13,9 @@
 #' See [limSolve::xsample()] for the meaning of matrices E, F, G and H.
 #'
 #' @return
-#' Return a list of two elements: 
-#'  * `prediction`: a data frame with one column per interaction strength 
-#' estimated. The number of row is given by the number of interaction sets 
+#' Return a list of two elements:
+#'  * `prediction`: a data frame with one column per interaction strength
+#' estimated. The number of row is given by the number of interaction sets
 #' estimated by `xsample()` (see parameter `iter` in `xsample()`).
 #'
 #' @references
@@ -24,21 +24,16 @@
 #' of the National Academy of Sciences 120:e2212061120. DOI: 10.1073/pnas.2212061120.
 #'
 #' @export
-#' 
+#'
 #' @examples
 #' A <- rbind(c(-1, -1), c(1, 0))
 #' R <- c(0.1, -0.05)
 #' B <- c(0.5, 0.25)
-#' res  <- fw_problem(A, B, R) |> fw_infer()
-#' 
+#' res <- fw_problem(A, B, R) |> fw_infer()
+#'
 fw_infer <- function(x, eff_max = 1, ...) {
     stopifnot(inherits(x, "fw_problem"))
-
-    if (!is.null(x$sdB)) {
-        out <- wrap_xsample_AB(x, eff_max = eff_max, ...)
-    } else {
-        out <- wrap_xsample(x, eff_max = eff_max, ...)
-    }
+    out <- wrap_xsample(x, eff_max = eff_max, ...)
     return(
         structure(
             list(prediction = out, problem = x),
@@ -55,13 +50,14 @@ fw_infer <- function(x, eff_max = 1, ...) {
 fw_predict_A <- function(y, index = 1) {
     stopifnot(inherits(y, "fw_predicted"))
     x <- y$problem
+    UU <- x$U[x$U$unknown, ]
     y <- y$prediction[index, ] |>
         dplyr::select(!leading_ev)
-    stopifnot(length(y) == nrow(x$U))
+    stopifnot(length(y) == nrow(UU))
 
-    out <- x$S * 0
-    for (i in seq_len(nrow(x$U))) {
-        out[x$U[i, 1], x$U[i, 2]] <- as.numeric(y[i]) * x$S[x$U[i, 1], x$U[i, 2]]
+    out <- x$A
+    for (i in seq_len(nrow(UU))) {
+        out[UU[i, 1], UU[i, 2]] <- as.numeric(y[i]) * x$A[UU[i, 1], UU[i, 2]]
     }
     out
 }
@@ -74,58 +70,97 @@ fw_predict_B <- function(y, index = 1) {
 }
 
 
-
-
-get_E_F <- function(A, B, R) {
+# equalities
+get_E_F <- function(A, B, R, U) {
     nr <- nrow(A)
-    # determine the number of unknown interactions to be searched for
-    # matrix U gives the coordinates of non-null interactions in A
-    U <- get_U_from_A(A)
-    ni <- nrow(U)
+    ni <- nrow(U[U$unknown, ])
+
+    AU <- get_unknown_interactions(A, U)
+    AK <- get_known_interactions(A, U)
 
     # foodweb interaction gives a first set of constrains
     E_fw <- matrix(0, nr, ni)
+    F_fw <- -R
     for (i in seq_len(nr)) {
-        # A is either -1, 0 or 1
-        tmp <- A[i, ] * B
+        # A is either -1, 0 or 1 for unknown interaction
+        tmpU <- AU[i, ] * B
+        # for known interactions we use this quantity sum it and add to F
+        tmpK <- AK[i, ] * B
         for (j in seq_len(nr)) {
-            if (tmp[j] != 0) {
-                ind_ij <- which(U[, 1] == i & U[, 2] == j)
-                E_fw[i, ind_ij] <- tmp[j]
+            if (tmpU[j] != 0) {
+                B
+                # LHS
+                ind_ij <- which(U$row == i & U$col == j)
+                E_fw[i, ind_ij] <- tmpU[j]
             }
         }
+        # all known interactions
+        F_fw[i] <- F_fw[i] - sum(tmpK)
     }
-    #
-    F_fw <- -R
 
     return(list(E = E_fw, F = F_fw))
 }
 
-get_G_H <- function(A, eff_max = 1) {
-    U <- get_U_from_A(A)
-    ni <- NROW(U) # number of interaction to infer
-    nr <- NROW(A) # number of spec
+
+# inequalities
+get_G_H <- function(A, U, eff_max = 1) {
+    UU <- U[U$unknown, ]
+    ni <- nrow(UU) # number of interactions to infer
+    nr <- NROW(A) # number of species
     # derive constraints using eff_max * a_{j,i} >= a_{i,j}
     # eff_max * a_{j,i} - a_{i,j} >= 0
     H_sym <- G_sym <- NULL
     k <- 0
-    tmp <- list()
+    tmpG <- tmpH <- list()
     for (i in seq_len(nr - 1)) {
+        # skip iteraction on diagonal
         for (j in seq(i + 1, nr)) {
-            if (A[i, j] != 0 && A[j, i] != 0) {
-                ind_ij <- which(U[, 1] == i & U[, 2] == j)
-                ind_ji <- which(U[, 1] == j & U[, 2] == i)
+            ind_ij <- which(U$row == i & U$col == j)
+            ind_ji <- which(U$row == j & U$col == i)
+            # remember unknown interactions first, known second
+            if (length(ind_ij) && length(ind_ji)) {
+                if (!U$unknown[ind_ij] && !U$unknown[ind_ji]) {
+                    next
+                }
                 k <- k + 1
-                tmp[[k]] <- rep(0, ni)
-                tmp[[k]][ind_ij] <- eff_max
-                tmp[[k]][ind_ji] <- -1
+                tmpG[[k]] <- rep(0, ni)
+                if (U$unknown[ind_ij] && U$unknown[ind_ji]) {
+                    # both are unknown
+                    if (A[j, i] > 0) {
+                        tmpG[[k]][ind_ij] <- eff_max
+                        tmpG[[k]][ind_ji] <- -1
+                    } else {
+                        tmpG[[k]][ind_ji] <- eff_max
+                        tmpG[[k]][ind_ij] <- -1
+                    }
+                    tmpH[[k]] <- 0
+                } else if (!U$unknown[ind_ij]) {
+                    # A[i, j] is known, so variable ind_ji is unknown
+                    # one less unknown, but still the inequalities remain
+                    if (A[j, i] > 0) {
+                        tmpG[[k]][ind_ji] <- eff_max
+                        tmpH[[k]] <- A[i, j]
+                    } else {
+                        tmpG[[k]][ind_ji] <- -eff_max * A[i, j]
+                        tmpH[[k]] <- -1
+                    }
+                } else {
+                    # A[j, i] is known
+                    if (A[j, i] > 0) {
+                        tmpG[[k]][ind_ij] <- eff_max
+                        tmpH[[k]] <- A[j, i]
+                    } else {
+                        tmpG[[k]][ind_ij] <- -eff_max * A[j, i]
+                        tmpH[[k]] <- -1
+                    }
+                }
             }
         }
     }
 
     if (k > 0) {
-        G_sym <- do.call(rbind, tmp)
-        H_sym <- matrix(0, ncol = 1, nrow = NROW(G_sym))
+        G_sym <- do.call(rbind, tmpG)
+        H_sym <- matrix(unlist(tmpH), ncol = 1)
     }
 
     # All interactions are positive
@@ -135,32 +170,30 @@ get_G_H <- function(A, eff_max = 1) {
     return(list(G = rbind(G_sym, G_pos), H = rbind(H_sym, H_pos)))
 }
 
+# sampling
 wrap_xsample <- function(x, eff_max = 1, ...) {
+    # tryCatch
     tmp <- do.call(
         limSolve::xsample,
-        c(get_E_F(A = x$S, B = x$B, R = x$R), get_G_H(x$S, eff_max), ...)
+        c(
+            get_E_F(A = x$A, B = x$B, R = x$R, U = x$U),
+            get_G_H(x$A, x$U, eff_max),
+            ...
+        )
     )
-    out <- tmp$X |> as.data.frame()
-    names(out) <- paste0(
-        "a_", 
-        apply(x$U[c("row", "col")], 1, paste, collapse = "_")
-    )
-    out$leading_ev <- get_xsample_stab(out, x$S, x$B, x$R, x$U, mod = x$model)
-    return(out)
-}
 
-wrap_xsample_AB <- function(x, eff_max = 1, ...) {
-    # we use A to know the real interactions but in the methods
-    # A takes 1, -1 or 0
-    tmp <- get_E_F(x$S, x$B, x$R)
-    ls_AB <- list(A = tmp$E, B = tmp$F, sdB = x$sdB)
-    tmp <- do.call(
-        limSolve::xsample,
-        c(ls_AB, get_G_H(x$S, eff_max), ...)
+    if (is.atomic(tmp)) {
+        out <- tmp |>
+            t() |>
+            as.data.frame()
+    } else {
+        out <- tmp$X |> as.data.frame()
+    }
+    names(out) <- paste0(
+        "a_",
+        apply(x$U[x$U$unknown, c("row", "col")], 1, paste, collapse = "_")
     )
-    out <- tmp$X |> as.data.frame()
-    names(out) <- paste0("a_", apply(x$U, 1, paste, collapse = "_"))
-    out$leading_ev <- get_xsample_stab(out, x$S, x$B, x$R, x$U, mod = x$model)
+    out$leading_ev <- get_xsample_stab(out, x$A, x$B, x$R, x$U, mod = x$model)
     return(out)
 }
 
@@ -174,20 +207,13 @@ get_leading_ev <- function(J) {
 }
 
 get_xsample_stab_unit <- function(x, A, B, R, U, mod) {
-    A_sim <- get_Asim(unlist(x), A, U)
+    A_sim <- predict_A(unlist(x), A, U)
     return(get_leading_ev(get_jacobian(A_sim, B, R, mod)))
 }
 
-get_Asim <- function(x, A, U) {
-    A_sim <- matrix(0, NROW(A), NROW(A))
-    for (i in seq(x)) {
-        A_sim[U[i, 1], U[i, 2]] <- x[i] * A[U[i, 1], U[i, 2]]
-    }
-    return(A_sim)
-}
 
 get_xsample_stab <- function(X, A, B, R, U, mod = mod_lv_fr1) {
-    stopifnot(NROW(U) == NCOL(X))
+    stopifnot(NROW(U[U$unknown, ]) == NCOL(X))
     out <- apply(
         X,
         1,
@@ -199,4 +225,29 @@ get_xsample_stab <- function(X, A, B, R, U, mod = mod_lv_fr1) {
         mod = mod
     )
     return(out)
+}
+
+get_known_interactions <- function(A, U) {
+    if (sum(U$unknown)) {
+        UU <- U[U$unknown, c("row", "col")]
+        A[as.matrix(UU)] <- 0
+    }
+    return(A)
+}
+
+get_unknown_interactions <- function(A, U) {
+    if (sum(!U$unknown)) {
+        UU <- U[!U$unknown, c("row", "col")]
+        A[as.matrix(UU)] <- 0
+    }
+    return(A)
+}
+
+predict_A <- function(y, A, U) {
+    UU <- U[U$unknown, ]
+    out <- A
+    for (i in seq_len(nrow(UU))) {
+        out[UU[i, 1], UU[i, 2]] <- as.numeric(y[i]) * A[UU[i, 1], UU[i, 2]]
+    }
+    out
 }

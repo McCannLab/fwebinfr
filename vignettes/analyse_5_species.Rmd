@@ -1,16 +1,16 @@
 ---
-title: "Use fwebinfr to infer interactions with 5 species"
+title: "Interaction and uncertainty"
 author: "Kevin Cazelles"
-date: 03-02-2024
+date: 23-02-2024
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Use fwebinfr to infer interactions with 5 species}
+  %\VignetteIndexEntry{Interaction and uncertainty}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 
-# System 
+# Study System 
 
 ```{R setup, message = FALSE}
 library(fwebinfr)
@@ -18,16 +18,17 @@ library(ggplot2)
 library(ggraph)
 library(patchwork)
 library(tidygraph)
-net <- fw_example_5species_2chains()
 ```
 
-Interaction matrix
+Here we consider one system that has 5 species and consists of two linear chains
+with one top predator linking the two.
 
 ```{R}
+net <- fw_example_5species_2chains()
 net
 ```
 
-Plot system
+Here is the dynamic of the system.
 
 ```{R plot, echo = FALSE, warning = FALSE}
 tmp <- net$A
@@ -39,27 +40,28 @@ grph <- tmp |>
 p1 <- ggraph(grph, layout = "auto") +
     geom_edge_fan(show.legend = FALSE) +
     geom_node_point(colour = c(3, 2, 2, 1, 1), size = 10) + 
-    theme_graph(foreground = "steelblue", fg_text_colour = "white")
+    theme_graph(foreground = "steelblue", fg_text_colour = "white") + 
+    geom_node_label(aes(label = 5:1), repel = TRUE, label.size = 1)
 print(p1)
 ```
 
 
-# Inference
+# Basic inference
 
-Now we call `fw_infer()` to predict interaction strengths.
+Now, we call `fw_infer()` to predict interaction strengths.
 
 ```{R infer}
-res <- fw_infer(net)
+res <- net |> fw_infer()
 head(res$prediction)
 ```
 
-Let's visualize the range of interaction stregth and stability.
+Let's visualize the range of interaction strength and stability.
 
 ```{R boxplot}
 fw_range_plot(res)
 ```
 
-Bow let's plot the dynamic for
+We can plot the dynamics for the most and the least stable systems.
 
 ```{R visualize, fig.height = 10}
 net_most_stable <- fw_model(
@@ -78,4 +80,22 @@ p1 <- fw_ode_plot(net_most_stable, net$B/1.5, seq(0, 2, 0.0001)) +
 p2 <- fw_ode_plot(net_least_stable, net$B/1.5, seq(0, 2, 0.0001)) +
   ggtitle("Maximum leading eigen value (least stable)")
 p1 / p2
+```
+
+
+# One less interaction 
+
+Let's fix `A[5, 3]`.
+
+```{R}
+U <- res$problem$U
+# set the first interaction to known
+A  <- net$A
+U$unknown[6] <- FALSE
+A[5, 3] <- mean(res$prediction$a_5_3) 
+
+res2 <- fw_problem(A = A, B = net$B, R = net$R, U) |>
+  fw_infer()
+
+fw_range_plot(res2)
 ```

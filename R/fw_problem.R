@@ -30,7 +30,7 @@
 #' * B: biomass vector
 #' * R: mortality rate vector
 #' * U: unknown interaction(s)
-#' * S: square matrix representing the signed structure (only 1/-1 and 0)
+#' * S: square matrix representing the signed structure (only 1/-1 and 0) of A.
 #' * SdB: biomass variation
 #' * model: the underlying model
 #'
@@ -98,7 +98,21 @@ create_U <- function(U, A) {
             U <- rbind(U, U2)
         }
     }
-    U
+    # need to have all unknown interactions first because the row number is
+    # use to identify unknowm variables
+    U[order(U$unknown, decreasing = TRUE), ]
+}
+
+
+create_A <- function(A, U) {
+    out <- (A > 0) + (A < 0) * -1
+    UU <- U[!U$unknown, c("row", "col")] |> as.matrix()
+    if (nrow(UU)) {
+        out[UU] <- A[UU]
+        out
+    } else {
+        out
+    }
 }
 
 
@@ -106,10 +120,12 @@ create_U <- function(U, A) {
 new_fw_problem <- function(A, B, R, U, sdB) {
     mod <- new_fw_model(A, B, R)
     tmp_U <- create_U(U, A)
+    tmp_A <- create_A(A, tmp_U)
+
     # interaction not mentioned
     structure(
         list(
-            A = mod$A,
+            A = tmp_A,
             B = mod$B,
             R = mod$R,
             S = get_S_from_A(A),
@@ -135,6 +151,8 @@ validate_U <- function(U, A) {
         all(U$row %in% seq_len(nrow(A)))
         all(U$col %in% seq_len(ncol(A)))
         identical(colnames(U), c("row", "col", "unknown"))
+        # at least one interaction should be unknown
+        any(U$unknown)
     })
     U
 }

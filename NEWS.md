@@ -1,5 +1,6 @@
 # fwebinfr devel 
 
+* `fw_infer()` handles known interactions.
 * Add `fw_range_plot()` to plot interaction strength and stability ranges.
 * Add `fw_ode_plot()` to visualize ODE integration.
 * Add an implementation of the niche model (see `fw_niche_model()`).

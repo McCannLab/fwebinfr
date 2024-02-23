@@ -4,12 +4,14 @@ test_that("fw_model() works", {
     B <- c(0.5, 0.25)
     res <- fw_model(A, B, R)
 
-    expect_identical(names(res), c("A", "B", "R", "model"))
+    expect_identical(names(res), c("A", "B", "R", "model", "leading_ev"))
     expect_identical(res$A, A)
 
     expect_error(fw_model(A, B, R[1]), "NROW(A) == length(R) is not TRUE", fixed = TRUE)
     expect_error(fw_model(A, B[1], R), "length(B) == length(R) is not TRUE", fixed = TRUE)
     expect_error(fw_model(A, B[1], R), "length(B) == length(R) is not TRUE", fixed = TRUE)
+
+    expect_equal(round(fw_example_2species()$leading_ev, 4), -0.025)
 })
 
 

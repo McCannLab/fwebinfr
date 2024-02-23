@@ -1,7 +1,7 @@
 ---
 title: "Get started with fwebinfr"
 author: "Kevin Cazelles"
-date: 03-02-2024
+date: 23-02-2024
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Get started with fwebinfr}
@@ -9,10 +9,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+The goal of the package `fwebinfr` is to predict interaction strenghts in food web models by solving Linear Inverse Models (LIM). `fwebinfr` provides a user-friendly interface to create such problems and leverages [`limSolve`](https://CRAN.R-project.org/package=limSolve) behind the scenes to solve them.
 
-# Using LIM to predict biomass 
 
-Here is an example with 2 species. First, we load the package.
+# Basic 2 species system
+
+Here is a built-in example with 2 species. First, we load the package.
 
 ```{R setup}
 library(fwebinfr)
@@ -20,7 +22,7 @@ library(ggplot2)
 library(patchwork)
 ```
 
-This example is available in the package and is called using `fw_example_2species()`
+This example is available in the package and is called using `fw_example_2species()`.
 
 ```{R value}
 # a first example
@@ -28,22 +30,41 @@ net <- fw_example_2species()
 net
 ```
 
-It is a object of class `fw_model` that includes all details needed for the inference. For the sake of the example, matrix A contains the real interaction, by default, none will be used for the inference as there are interpreted as unkown according to atrix `U`. A quick visualisation of the dynamics. 
+It is an object of class `fw_model` that includes all details needed for the inference. For the sake of the example, matrix A contains the real interaction, by default, none will be used for the inference as there are interpreted as unkown according to atrix `U`. A quick visualisation of the dynamics. 
 
 ```{R plot}
 fw_ode_plot(net, rep(0.3, 2), seq(1, 500, 0.1))
 ```
 
-Then we call `fw_infer()` which requires an object of class `fw_problem` we obtain calling `fw_as_problem()`.
+
+# Infering interaction strengths
+
+We now call `fw_infer()` which requires an object of class `fw_problem` we obtain calling `fw_as_problem()`.
 
 ```{R compute}
-res <- fw_infer(fw_as_problem(net), burninlength = 5000, iter = 5000, type = "mirror")
+res <- fw_infer(fw_as_problem(net))
 class(res)
 dim(res$prediction)
 head(res$prediction)
 ```
 
-Note that here `burninlength` = 5000, `iter` and `type` are actually parameters passed to `limSolve::xsample()`. The output is an object of class `fw_predicted` which is a basic data frane, Here is a simple way to have an idea of the range of interaction strengths.
+Note that we can also use extra parameters of the `limSolve::xsample()` that is called ultimately.
+
+```{R compute2}
+res <- fw_infer(fw_as_problem(net), burninlength = 5000, iter = 5000, type = "mirror")
+class(res)
+```
+
+Here, `burninlength` = 5000, `iter` and `type` are actually parameters passed to `limSolve::xsample()`. The output is an object of class `fw_predicted` which is a list of two elements: 
+  1. `prediction` a data frame of the prediction,
+  2. `problem` the orignal problem.
+  
+```{R pred}
+dim(res$prediction)
+head(res$prediction)
+```
+
+There are functions to quickly eplore the result. For the range of interaction strengths can be used visualize with `fw_range_plot()`.
 
 ```{R res}
 fw_range_plot(res)
@@ -69,6 +90,9 @@ fw_predict_B(res, 1)
 fw_predict_B(res, 1000)
 ```
 
+
+## Compare most and least stable systems
+
 Let's plot the dynamics for the system with the min and max leading eigen value.
 
 
@@ -92,4 +116,33 @@ p1 <- fw_ode_plot(net_most_stable, rep(0.3, 2), seq(1, 500, 0.1)) +
 p2 <- fw_ode_plot(net_least_stable, rep(0.3, 2), seq(1, 500, 0.1)) +
   ggtitle("Maximum leading eigen value (least stable)")
 p1 / p2
+```
+
+
+## Working with known interactions
+
+In the example above, all non-null interactions are regarded as unknown once the `fw_model` object is passed to `fw_problem`. 
+In some cases, part of the interaction may be known. To specify what interactions are known, we define U. For instance let's assume `A[1,1]` is known and equals -0.1.
+
+```{R known_interaction} 
+# use the U matrix
+U <- res$problem$U
+# set the first interaction to known
+U$unknown[1] <- FALSE
+
+res2 <- fw_problem(A = net$A, B = net$B, R = net$R, U) |> 
+  fw_infer()
+res2
+```
+
+As mentioned by the warning, there is only one solution here, the one solution we started with.
+
+```{R uique_ol} 
+uniq_sys <- fw_model(
+  A = fw_predict_A(res2, 1),
+  B = fw_predict_B(res2, 1),
+  R = net$R
+)
+fw_ode_plot(uniq_sys, rep(0.3, 2), seq(1, 500, 0.1)) +
+   ggtitle("Unique solution")
 ```

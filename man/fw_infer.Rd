@@ -15,7 +15,7 @@ fw_predict_B(y, index = 1)
 \arguments{
 \item{x}{an object of class \code{fw_problem}.}
 
-\item{eff_max}{max efficience.}
+\item{eff_max}{max efficiency.}
 
 \item{...}{further arguments passed to \code{\link[limSolve:xsample]{limSolve::xsample()}}).}
 
@@ -51,7 +51,7 @@ See \code{\link[limSolve:xsample]{limSolve::xsample()}} for the meaning of matri
 A <- rbind(c(-1, -1), c(1, 0))
 R <- c(0.1, -0.05)
 B <- c(0.5, 0.25)
-res  <- fw_problem(A, B, R) |> fw_infer()
+res <- fw_problem(A, B, R) |> fw_infer()
 
 }
 \references{

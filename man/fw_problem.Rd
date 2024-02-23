@@ -34,7 +34,7 @@ An object of class \code{fw_problem} which is a named list of 7 elements:
 \item B: biomass vector
 \item R: mortality rate vector
 \item U: unknown interaction(s)
-\item S: square matrix representing the signed structure (only 1/-1 and 0)
+\item S: square matrix representing the signed structure (only 1/-1 and 0) of A.
 \item SdB: biomass variation
 \item model: the underlying model
 }
