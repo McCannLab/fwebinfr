@@ -70,10 +70,16 @@ There are functions to quickly eplore the result. For the range of interaction s
 fw_range_plot(res)
 ```
 
-Note that the real values fall within this range: 
+This function also allows one to see the individual points colored according to their stability.
 
-```R
-net$A
+```{R range2}
+fw_range_plot(res, show_points = TRUE)
+```
+
+There is also an option to compare the most stable set of parameters to the rest of value. By default, it compares the 25% most stable systems to the rest of the systems. 
+
+```{R range3}
+fw_range_compare_plot(res)
 ```
 
 For any result, we can check the food web predicted:

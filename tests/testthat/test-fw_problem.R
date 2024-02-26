@@ -4,7 +4,7 @@ B <- c(0.5, 0.25)
 
 test_that("fw_problem() works", {
     res <- fw_problem(A, B, R)
-    expect_identical(names(res), c("A", "B", "R", "S", "U", "sdB", "model"))
+    expect_identical(names(res), c("A", "B", "R", "U", "sdB", "model"))
     expect_true(is.null(res$sdB))
     expect_identical(res$A, A)
     expect_identical(res$B, B)

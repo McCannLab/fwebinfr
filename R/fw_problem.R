@@ -128,7 +128,6 @@ new_fw_problem <- function(A, B, R, U, sdB) {
             A = tmp_A,
             B = mod$B,
             R = mod$R,
-            S = get_S_from_A(A),
             U = tmp_U,
             sdB = sdB,
             model = mod$model

@@ -28,7 +28,7 @@ net <- fw_example_5species_2chains()
 net
 ```
 
-Here is the dynamic of the system.
+Here is the dynamics of the system.
 
 ```{R plot, echo = FALSE, warning = FALSE}
 tmp <- net$A
@@ -38,9 +38,13 @@ grph <- tmp |>
     mutate(name = paste0("spc_", 1:5))  |>
     activate(edges)
 p1 <- ggraph(grph, layout = "auto") +
+    coord_cartesian(clip = "off") +
     geom_edge_fan(show.legend = FALSE) +
-    geom_node_point(colour = c(3, 2, 2, 1, 1), size = 10) + 
-    theme_graph(foreground = "steelblue", fg_text_colour = "white") + 
+    geom_node_point(colour = c(3, 2, 2, 1, 1), size = c(10, 12, 14, 17, 20)) + 
+    theme_graph(
+      foreground = "steelblue", fg_text_colour = "white",
+        plot_margin = margin(10, 10, 10, 10), border = FALSE
+      ) + 
     geom_node_label(aes(label = 5:1), repel = TRUE, label.size = 1)
 print(p1)
 ```
@@ -59,6 +63,10 @@ Let's visualize the range of interaction strength and stability.
 
 ```{R boxplot}
 fw_range_plot(res)
+```
+
+```{R boxplot2}
+fw_range_compare_plot(res, show_lev = FALSE)
 ```
 
 We can plot the dynamics for the most and the least stable systems.

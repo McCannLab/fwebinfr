@@ -3,11 +3,14 @@
 \name{fw_ode_plot}
 \alias{fw_ode_plot}
 \alias{fw_range_plot}
+\alias{fw_range_compare_plot}
 \title{Simple ODE plot}
 \usage{
 fw_ode_plot(x, init, times)
 
-fw_range_plot(y, include_stability = TRUE)
+fw_range_plot(y, show_points = FALSE, show_lev = TRUE)
+
+fw_range_compare_plot(y, prob = 0.25, show_lev = TRUE)
 }
 \arguments{
 \item{x}{an object of class \code{fw_model}.}
@@ -18,8 +21,14 @@ fw_range_plot(y, include_stability = TRUE)
 
 \item{y}{an object of class \code{fw_predict}.}
 
-\item{include_stability}{a logical. Should the distribution of eigen values
+\item{show_points}{a logical. Should points be added on top of box. Note
+that points will be colored according to the value of the leading eigen
+vector.}
+
+\item{show_lev}{a logical. Should the distribution of eigen values
 be included?}
+
+\item{prob}{the quantile used to split parameters sets.}
 }
 \description{
 Simple ODE plot
