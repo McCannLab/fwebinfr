@@ -1,7 +1,7 @@
 ---
 title: "Get started with fwebinfr"
 author: "Kevin Cazelles"
-date: 23-02-2024
+date: 26-02-2024
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Get started with fwebinfr}

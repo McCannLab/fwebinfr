@@ -10,6 +10,8 @@ pres
 *.o
 *.so
 TODO.md
+vignettes/res
+vignettes/*.orig
 
 # History files
 .Rhistory

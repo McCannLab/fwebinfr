@@ -7,3 +7,6 @@
 ^docs$
 ^\.vscode$
 ^TODO\.md$
+^makefile$
+^vignettes/analyse_uncertainty\.Rmd\.orig$
+^vignettes/res$

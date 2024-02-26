@@ -38,7 +38,7 @@ fw_range_plot <- function(y, show_points = FALSE, show_lev = TRUE) {
 
     y_long <- y$prediction |>
         tidyr::pivot_longer(
-            tidyr::contains("a_"),
+            tidyr::starts_with("a_"),
             values_to = "val", names_to = "var"
         )
 
@@ -55,12 +55,13 @@ fw_range_plot <- function(y, show_points = FALSE, show_lev = TRUE) {
         ggplot2::xlab("Interactions") +
         ggplot2::xlab("Interaction strengths")
     if (show_points) {
-        p1 <- p1 + ggplot2::geom_jitter(
-            ggplot2::aes(color = leading_ev),
-            size = 0.2,
-            alpha = 0.4
-        ) +
-            scale_colour_gradientn(colours = grDevices::terrain.colors(10))
+        p1 <- p1 +
+            ggplot2::geom_jitter(
+                ggplot2::aes(color = leading_ev),
+                size = 0.2,
+                alpha = 0.4
+            ) +
+            ggplot2::scale_colour_gradientn(colours = grDevices::terrain.colors(10))
     }
 
     if (show_lev) {
