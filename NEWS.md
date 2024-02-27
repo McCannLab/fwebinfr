@@ -1,4 +1,4 @@
-# fwebinfr devel 
+# fwebinfr 0.0.2
 
 * `fw_infer()` handles known interactions.
 * Add `fw_range_plot()` and `fw_range_compare_plot()` to plot interaction 
