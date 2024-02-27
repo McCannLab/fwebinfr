@@ -1,8 +1,8 @@
 A <- rbind(c(-1, -1), c(1, 0))
 R <- c(0.1, -0.05)
 B <- c(0.5, 0.25)
-U <- get_U_from_A(A) |> as.data.frame()
-U$unknown <- TRUE
+U <- create_U_from_A(A)
+
 
 test_that("get_E_F works", {
     res <- get_E_F(A, B, R, U)
@@ -10,29 +10,6 @@ test_that("get_E_F works", {
     expect_equal(res$F, -R)
 })
 
-
-test_that("get_U_from_A() works", {
-    res <- get_U_from_A(A)
-    expect_identical(
-        res,
-        structure(
-            c(1L, 2L, 1L, 1L, 1L, 2L),
-            dim = 3:2,
-            dimnames = list(NULL, c("row", "col"))
-        )
-    )
-    AA <- A
-    AA[1, 2] <- 0
-    res <- get_U_from_A(AA)
-    expect_identical(
-        res,
-        structure(
-            c(1L, 2L, 1L, 1L),
-            dim = c(2L, 2L),
-            dimnames = list(NULL, c("row", "col"))
-        )
-    )
-})
 
 test_that("get_G_H works", {
     res <- get_G_H(A, U, eff_max = 0.5)

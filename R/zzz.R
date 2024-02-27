@@ -19,3 +19,11 @@ scale_min_max <- function(x) {
         rep(1, length(x))
     }
 }
+
+seq_nrow <- function(x) {
+    seq_len(nrow(x))
+}
+
+seq_ncol <- function(x) {
+    seq_len(ncol(x))
+}

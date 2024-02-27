@@ -50,7 +50,7 @@ fw_infer <- function(x, eff_max = 1, ...) {
 fw_predict_A <- function(y, index = 1) {
     stopifnot(inherits(y, "fw_predicted"))
     x <- y$problem
-    UU <- x$U[x$U$unknown, ]
+    UU <- get_matrix_index(x$U)
     y <- y$prediction[index, ] |>
         dplyr::select(!leading_ev)
     stopifnot(length(y) == nrow(UU))
@@ -78,7 +78,7 @@ get_E_F <- function(A, B, R, U) {
     AU <- get_unknown_interactions(A, U)
     AK <- get_known_interactions(A, U)
 
-    # foodweb interaction gives a first set of constrains
+    # food web interaction gives a first set of constrains
     E_fw <- matrix(0, nr, ni)
     F_fw <- -R
     for (i in seq_len(nr)) {
@@ -113,7 +113,7 @@ get_G_H <- function(A, U, eff_max = 1) {
     k <- 0
     tmpG <- tmpH <- list()
     for (i in seq_len(nr - 1)) {
-        # skip iteraction on diagonal
+        # skip interactions on diagonal
         for (j in seq(i + 1, nr)) {
             ind_ij <- which(U$row == i & U$col == j)
             ind_ji <- which(U$row == j & U$col == i)
@@ -229,7 +229,7 @@ get_xsample_stab <- function(X, A, B, R, U, mod = mod_lv_fr1) {
 
 get_known_interactions <- function(A, U) {
     if (sum(U$unknown)) {
-        UU <- U[U$unknown, c("row", "col")]
+        UU <- get_matrix_index(U)
         A[as.matrix(UU)] <- 0
     }
     return(A)
@@ -237,7 +237,7 @@ get_known_interactions <- function(A, U) {
 
 get_unknown_interactions <- function(A, U) {
     if (sum(!U$unknown)) {
-        UU <- U[!U$unknown, c("row", "col")]
+        UU <- get_matrix_index(U, FALSE)
         A[as.matrix(UU)] <- 0
     }
     return(A)
@@ -246,8 +246,6 @@ get_unknown_interactions <- function(A, U) {
 predict_A <- function(y, A, U) {
     UU <- U[U$unknown, ]
     out <- A
-    for (i in seq_len(nrow(UU))) {
-        out[UU[i, 1], UU[i, 2]] <- as.numeric(y[i]) * A[UU[i, 1], UU[i, 2]]
-    }
+    out[UU[, c("row", "col")] |> as.matrix()] <- as.numeric(y) * UU$value 
     out
 }
