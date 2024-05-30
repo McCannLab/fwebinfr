@@ -10,3 +10,4 @@
 ^makefile$
 ^vignettes/analyse_uncertainty\.Rmd\.orig$
 ^vignettes/res$
+^\.github$
