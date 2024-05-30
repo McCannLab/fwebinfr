@@ -1,7 +1,7 @@
 Package: fwebinfr
 Title: Infer Food Webs Interactions
-Version: 0.0.2
-Date: 2024-02-22
+Version: 0.0.2.9000
+Date: 2024-04-04
 Authors@R: 
     person(given = "Kevin",
            family = "Cazelles",
@@ -15,7 +15,7 @@ Imports:
     cli (>= 3.6),
     deSolve (>= 1.4.0),
     dplyr (>= 1.1),
-    ggplot2 (>= 3.4),
+    ggplot2 (>= 3.5),
     limSolve (>= 1.5),
     patchwork (>= 1.2),
     Rcpp (>= 1.0.12),
@@ -25,10 +25,11 @@ Imports:
     utils
 Suggests:
     curl,
-    ggraph,
+    ggraph (>= 2.2.1),
     knitr,
     readxl,
     rmarkdown,
+    scales,
     tarchetypes,
     targets,
     testthat (>= 3.0.0),

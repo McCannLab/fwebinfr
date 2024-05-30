@@ -25,15 +25,16 @@ fw_ode_plot <- function(x, init, times) {
             -time,
             names_to = "variable", values_to = "value"
         ) |>
+        dplyr::rename("species" = "variable") |>
         ggplot2::ggplot() +
-        ggplot2::aes(x = time, y = value, color = variable) +
+        ggplot2::aes(x = time, y = value, color = species) +
         ggplot2::geom_line()
 }
 
 
 #' @export
 #' @rdname fw_ode_plot
-fw_range_plot <- function(y, show_points = FALSE, show_lev = TRUE) {
+fw_range_plot <- function(y, show_points = FALSE, show_lev = TRUE, inv = FALSE) {
     stopifnot(inherits(y, "fw_predicted"))
 
     y_long <- y$prediction |>
@@ -46,14 +47,12 @@ fw_range_plot <- function(y, show_points = FALSE, show_lev = TRUE) {
         ggplot2::ggplot(ggplot2::aes(x = var, y = val)) +
         ggplot2::geom_boxplot() +
         ggplot2::scale_y_continuous(trans = "log10") +
-        ggplot2::ggtitle("Interaction strengths") +
         ggplot2::theme(
             axis.text.x = ggplot2::element_text(
                 angle = 90, vjust = 0.5, hjust = 1
             )
         ) +
-        ggplot2::xlab("Interactions") +
-        ggplot2::xlab("Interaction strengths")
+        ggplot2::ylab("Interaction strengths")
     if (show_points) {
         p1 <- p1 +
             ggplot2::geom_jitter(
@@ -65,15 +64,20 @@ fw_range_plot <- function(y, show_points = FALSE, show_lev = TRUE) {
     }
 
     if (show_lev) {
-        p2 <- y$prediction |>
+        df_lev <- y$prediction |>
             tidyr::pivot_longer(
                 tidyr::contains("leading_"),
                 values_to = "val", names_to = "var"
-            ) |>
+            )
+        if (inv) {
+            df_lev <- df_lev |> dplyr::mutate(val = -val)
+        }
+        p2 <- df_lev |>
             ggplot2::ggplot() +
             ggplot2::geom_boxplot(ggplot2::aes(x = var, y = val)) +
             ggplot2::ggtitle("Stability") +
             ggplot2::xlab("") +
+            ggplot2::scale_x_discrete(labels="") +
             ggplot2::ylab("Leading eigen value")
         p1 + p2 + plot_layout(widths = c(3, 1))
     } else {
@@ -93,7 +97,15 @@ fw_range_compare_plot <- function(y, prob = 0.25, show_lev = TRUE) {
     y_tmp <- y$prediction |>
         dplyr::mutate(
             most_stable = leading_ev <= stats::quantile(leading_ev, prob)
+        ) |>
+        dplyr::mutate(
+            most_stable_display =
+                dplyr::case_when(
+                    most_stable ~ paste0("top ", prob * 100, "%"),
+                    .default = "less stable"
+                )
         )
+
 
     y_long <- y_tmp |>
         tidyr::pivot_longer(
@@ -102,17 +114,20 @@ fw_range_compare_plot <- function(y, prob = 0.25, show_lev = TRUE) {
         )
 
     p1 <- y_long |>
-        ggplot2::ggplot(ggplot2::aes(x = var, y = val, fill = most_stable)) +
+        ggplot2::ggplot(ggplot2::aes(x = var, y = val, fill = most_stable_display)) +
         ggplot2::geom_boxplot() +
-        ggplot2::scale_y_continuous(trans = "log10") +
-        ggplot2::ggtitle("Interaction strengths") +
+        ggplot2::scale_y_continuous(
+            trans = "log10",
+            labels = scales::label_number(0.0001)
+        ) +
+       # ggplot2::ggtitle("Distribution of interaction strengths") +
         ggplot2::theme(
             axis.text.x = ggplot2::element_text(
                 angle = 90, vjust = 0.5, hjust = 1
             )
         ) +
         ggplot2::xlab("Interactions") +
-        ggplot2::xlab("Interaction strengths")
+        ggplot2::ylab("Interaction strengths")
 
     if (show_lev) {
         p2 <- y_tmp |>
@@ -122,7 +137,7 @@ fw_range_compare_plot <- function(y, prob = 0.25, show_lev = TRUE) {
             ) |>
             ggplot2::ggplot() +
             ggplot2::geom_boxplot(
-                ggplot2::aes(x = var, y = val, fill = most_stable),
+                ggplot2::aes(x = var, y = val, fill = most_stable_display),
                 show.legend = FALSE
             ) +
             ggplot2::ggtitle("Stability") +

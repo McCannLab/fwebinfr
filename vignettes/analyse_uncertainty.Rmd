@@ -1,7 +1,7 @@
 ---
 title: "Interaction and uncertainty"
 author: "Kevin Cazelles"
-date: 23-02-2024
+date: 04-04-2024
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Interaction and uncertainty}
@@ -13,6 +13,7 @@ vignette: >
 # Study System 
 
 ```{R setup, message = FALSE}
+library(dplyr)
 library(fwebinfr)
 library(ggplot2)
 library(ggraph)
@@ -60,10 +61,16 @@ res <- net |> fw_infer()
 head(res$prediction)
 ```
 
-Let's visualize the range of interaction strength and stability.
+Let's visualize the range of interaction strengths and stability.
 
 ```{R boxplot}
 fw_range_plot(res)
+```
+
+```R
+fw_range_plot(res, inv = TRUE) + ggtitle("Resilience") + xlab("") + ylab("")
+ggsave("distrib_5sp_res.png", width = 11, height = 7)
+
 ```
 
 ```{R boxplot2}
@@ -84,11 +91,14 @@ net_least_stable <- fw_model(
   R = net$R
 )
 
-p1 <- fw_ode_plot(net_most_stable, net$B/1.5, seq(0, 2, 0.0001)) +
+p1 <- fw_ode_plot(net_most_stable, net$B/1.5, seq(0, 1, 0.001)) +
+  scale_y_continuous(trans = "log10", labels = scales::label_number(1)) + 
   ggtitle("Minimum leading eigen value (most stable)") 
-p2 <- fw_ode_plot(net_least_stable, net$B/1.5, seq(0, 2, 0.0001)) +
+p2 <- fw_ode_plot(net_least_stable, net$B/1.5, seq(0, 1, 0.001)) +
+  scale_y_continuous(trans = "log10", labels = scales::label_number(1)) + 
   ggtitle("Maximum leading eigen value (least stable)")
 p1 / p2
+ggsave("dynamic_5.png")
 ```
 
 
@@ -142,9 +152,269 @@ res3 <- fw_problem(A = A, B = net$B, R = net$R, U) |>
 fw_range_plot(res3)
 ```
 
+<!-- WORK DONE FOR THE WORKSHOP -->
+
+```R
+fw_range_compare_plot(res, show_lev = FALSE) + 
+ggtitle("") + 
+theme(text = element_text(size = 16), legend.position = "none")
+ggsave("most_25.png", width = 12, height = 7) 
+
+fw_range_compare_plot(res, prob = 0.1, show_lev = FALSE) + 
+ggtitle("") + 
+theme(text = element_text(size = 16), legend.position = "none")
+ggsave("most_10.png", width = 12, height = 7)
+
+fw_range_compare_plot(res, prob = 0.01, show_lev = FALSE) +
+ggtitle("") + 
+theme(text = element_text(size = 16), legend.position = "none")
+ggsave("most_1.png", width = 12, height = 7)
+```
+
+Comparing the two 
 
 
-# Imcreasing one interaction strenght
+```R 
+df_all<- res3$prediction  |>
+  dplyr::mutate(group = "a_3_1 unknown") |> 
+  tidyr::pivot_longer(cols = starts_with("a_"))  |>
+  bind_rows(
+     res$prediction  |>
+      dplyr::mutate(group = "a_3_1 known") |> 
+      tidyr::pivot_longer(cols = starts_with("a_")),
+      data.frame(group = "a_3_1 unknown", name = "a_3_1", value = 1)
+  ) 
+p1 <- df_all |>
+  ggplot() +
+    geom_boxplot(
+      aes(x = name, y = value, fill = group)
+    ) +
+      scale_y_continuous(trans = "log10", labels = scales::label_number(0.0001)) +
+    # ggplot2::ggtitle("") +
+    xlab("") +
+    ylab("Interaction strength") + theme(
+      text = element_text(size = 16)
+    )
+p1 
+ggsave("boxplot_one_less.png", width = 14)
+
+p2 <- df_all |>
+  ggplot() +
+  geom_boxplot(
+    aes(x = group, y = leading_ev, fill = group)
+  ) +
+  xlab("") +
+  ylab("Interaction strength") + 
+  theme(text = element_text(size = 16))
+ggsave("boxplot_one_less_stab.png")
+```
+
+
+```R
+res_08 <- net |> fw_infer(eff_max = 0.75)
+res_06 <- net |> fw_infer(eff_max = 0.5)
+df_all <- res$prediction |>
+  dplyr::mutate(group = "max eff = 1") |>
+  tidyr::pivot_longer(cols = starts_with("a_")) |>
+  bind_rows(
+    res_08$prediction |>
+      dplyr::mutate(group = "max eff = 0.75") |>
+      tidyr::pivot_longer(cols = starts_with("a_")), 
+      res_06$prediction |>
+      dplyr::mutate(group = "max eff = 0.5") |>
+      tidyr::pivot_longer(cols = starts_with("a_")), 
+  ) 
+  
+p1 <- df_all |>
+  ggplot() +
+  geom_boxplot(
+    aes(x = name, y = value, fill = group)
+  ) +
+  scale_y_continuous(trans = "log10", labels = scales::label_number(0.0001)) +
+  # ggplot2::ggtitle("") +
+  xlab("") +
+  ylab("Interaction strength") +
+  theme(text = element_text(size = 16))
+p1
+ggsave("change_energy_constraints.png", width = 14)
+
+p2 <- df_all |>
+  ggplot() +
+  geom_boxplot(
+    aes(x = group, y = leading_ev, fill = group)
+  ) +
+  xlab("") +
+  ylab("Interaction strength") + 
+    theme(text = element_text(size = 16))
+p2
+
+ggsave("change_energy_constraints_stab.png")
+```
+
+<!-- though experiments increasing top pred biomass -->
+
+```R 
+net_tpb <- rep(list(net), 4)
+mult <- c(1, 5, 10, 25)
+for (i in seq(mult)) {
+  net_tpb[[i]]$B[5L] <- net_tpb[[i]]$B[5L]*mult[i]
+}
+res_mul <- lapply(net_tpb, fw_infer)
+
+grp <- sprintf("x%02d", mult)
+res_mul_pred <- list()
+for (i in seq(res_mul)) {
+  res_mul_pred[[i]] <- res_mul[[i]]$prediction  |> 
+    tidyr::pivot_longer(cols = starts_with("a_"))  |>
+    dplyr::mutate(group  = grp[i])
+}
+
+res_mul_all <- do.call(rbind, res_mul_pred)
+
+p1 <- res_mul_all |>
+  ggplot() +
+  geom_boxplot(
+    aes(x = name, y = value, fill = group)
+  ) +
+  scale_y_continuous(trans = "log10", labels = scales::label_number(0.0001)) +
+  # ggplot2::ggtitle("") +
+  xlab("") +
+  ylab("Interaction strength") +
+  theme(
+    text = element_text(size = 20),
+    legend.position = "bottom"
+  )
+p1
+ggsave("increase_tp_biomass.png", width = 14)
+
+p2 <- res_mul_all  |>
+  ggplot() +
+  geom_boxplot(
+    aes(x = group, y = leading_ev, fill = group)
+  ) +
+  xlab("") +
+  ylab("Interaction strength") +
+  theme(text = element_text(size = 18))
+p2
+
+ggsave("increase_tp_biomass_stab.png", width = 8)
+```
+
+<!-- three phases inference -->
+
+```R 
+net1 <- net2 <- net3 <- net
+
+nval <- 50 
+df_ts <- data.frame(
+  biomass = c(
+    rep(10000, nval) + rnorm(nval, 0, sd = 1000),
+    rep(1000, nval) + rnorm(nval, 0, sd = 150),
+    rep(200, nval) + rnorm(nval, 0, sd = 40),
+    rep(100, nval) + rnorm(nval, 0, sd = 10),
+    rep(20, nval) + rnorm(nval, 0, sd = 1),
+    rep(9000, nval) + rnorm(nval, 0, sd = 1500),
+    rep(800, nval) + rnorm(nval, 0, sd = 180),
+    rep(300, nval) + rnorm(nval, 0, sd = 15),
+    rep(200, nval) + rnorm(nval, 0, sd = 15),
+    rep(5, nval) + rnorm(nval, 0, sd = 1),
+    rep(5000, nval) + rnorm(nval, 0, sd = 1500),
+    rep(700, nval) + rnorm(nval, 0, sd = 200),
+    rep(150, nval) + rnorm(nval, 0, sd = 20),
+    rep(200, nval) + rnorm(nval, 0, sd = 20),
+    rep(4, nval) + rnorm(nval, 0, sd = 1),
+    rep(100, nval) + rnorm(nval, 0, sd = 10)
+  ),
+  species = c(
+    rep(1:5, each = 50), 
+    rep(1:5, each = 50), 
+    rep(1:6, each = 50)
+  )  |> as.factor(),
+  phase = c(rep("Phase 1", 250), rep("Phase 2", 250), rep("Phase 3", 300)),
+  time = c(
+    rep(seq(0, 1, length.out = 50), 5), 
+    rep(seq(1, 2, length.out = 50), 5), 
+    rep(seq(2, 3, length.out = 50), 6)
+  )
+)
+  
+p1 <- df_ts |> 
+  ggplot(aes(x = time, y = biomass, group = species,  colour = species)) +
+  scale_y_continuous(trans = "log10", labels = scales::label_number(1)) +
+  geom_line(linewidth= 1.52) + 
+  xlab("Time") +
+  ylab("Biomass") +
+  theme(text = element_text(size = 20))
+ggsave("ts_3phases.png", width = 20)
+
+net2$B <- c(9000, 800, 300, 200, 5)
+net2$R <- c(500, 100, -500, -100, -2000)
+
+net3$B <- c(5000, 700, 150, 200, 4, 100)
+net3$R <- c(500, 100, -500, -100, -2000, -100)
+net3$A <- rbind(
+  net$A, c(1, 0, 0, 0, 0)
+)  |> 
+  cbind(c(-1, 0, 0, 0, 0, 0))
+net3 <- fw_problem(net3$A, net3$B, net3$R)
+
+res1 <- net1 |> fw_infer()
+res2 <- net2 |> fw_infer()
+res3 <- net3 |> fw_infer()
+
+fw_range_plot(res1)
+fw_range_plot(res2)
+fw_range_plot(res3)
+
+
+df_all <- res1$prediction |>
+  dplyr::mutate(group = "phase 1") |>
+  tidyr::pivot_longer(cols = starts_with("a_")) |>
+  bind_rows(
+    res2$prediction |>
+      dplyr::mutate(group = "phase 2") |>
+      tidyr::pivot_longer(cols = starts_with("a_")),
+    res3$prediction |>
+      dplyr::mutate(group = "phase 3") |>
+      tidyr::pivot_longer(cols = starts_with("a_")),
+  )
+
+p1 <- df_all |>
+  ggplot() +
+  geom_boxplot(
+    aes(x = name, y = value, fill = group)
+  ) +
+  scale_y_continuous(trans = "log10", labels = scales::label_number(0.0001)) +
+  # ggplot2::ggtitle("") +
+  xlab("") +
+  ylab("Interaction strength") +
+  theme(text = element_text(size = 16))
+p1
+ggsave("3phases_all.png", width = 14)
+
+p2 <- df_all |>
+  ggplot() +
+  geom_boxplot(
+    aes(x = group, y = -leading_ev, fill = group)
+  ) +
+  xlab("") +
+  ggplot2::scale_x_discrete(labels=c("", "", "")) +
+  ylab("Resilience") +
+  theme(text = element_text(size = 16))
+p2
+
+ggsave("3phases_all_stab.png", width = 7, height = 8)
+
+
+```
+
+
+
+
+
+
+
+# Increasing one interaction strength
 
 Here we increase A[3, 1] from 0.1 to 2.5.
 

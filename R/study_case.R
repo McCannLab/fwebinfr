@@ -77,3 +77,5 @@ fw_gen_parms_exper2 <- function() {
     B <- limSolve::lsei(E = A, F = -R)$X
     list(A = A, B = B, R = R)
 }
+
+

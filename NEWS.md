@@ -10,7 +10,7 @@ strengths and stability ranges.
 * Export `fw_predict_A()` and `fw_predict_B()`.
 * Add vignettes "Get started with fwebinfr" and "Interaction and uncertainty".
 * `fw_infer()` gains arguments `sdB` to dealt with biomass variation and `...`
-to pass further argument to `limSolve::xsample()`.
+to pass further arguments to `limSolve::xsample()`.
 
 
 # fwebinfr 0.0.1

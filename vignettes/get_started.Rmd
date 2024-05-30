@@ -1,7 +1,7 @@
 ---
 title: "Get started with fwebinfr"
 author: "Kevin Cazelles"
-date: 26-02-2024
+date: 04-04-2024
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Get started with fwebinfr}
@@ -9,12 +9,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-The goal of the package `fwebinfr` is to predict interaction strenghts in food web models by solving Linear Inverse Models (LIM). `fwebinfr` provides a user-friendly interface to create such problems and leverages [`limSolve`](https://CRAN.R-project.org/package=limSolve) behind the scenes to solve them.
+The goal of the package `fwebinfr` is to predict interaction strengths in food web models by solving Linear Inverse Models (LIM). `fwebinfr` provides a user-friendly interface to create such problems and leverages [`limSolve`](https://CRAN.R-project.org/package=limSolve) behind the scenes to solve them.
 
 
 # Basic 2 species system
 
-Here is a built-in example with 2 species. First, we load the package.
+Here is a built-in example with 2 species. First, we load the package along with packages to create plots.
 
 ```{R setup}
 library(fwebinfr)
@@ -30,47 +30,75 @@ net <- fw_example_2species()
 net
 ```
 
-It is an object of class `fw_model` that includes all details needed for the inference. For the sake of the example, matrix A contains the real interaction, by default, none will be used for the inference as there are interpreted as unkown according to atrix `U`. A quick visualisation of the dynamics. 
+It is an object of class `fw_model` that includes all details needed for the inference. For the sake of the example, matrix A contains the real interactions, and by default, none will be used for the inference as there are interpreted as unknown according to matrix `U`. A quick visualization of the dynamics. 
 
 ```{R plot}
 fw_ode_plot(net, rep(0.3, 2), seq(1, 500, 0.1))
 ```
 
 
-# Infering interaction strengths
+# Inferring interaction strengths
 
-We now call `fw_infer()` which requires an object of class `fw_problem` we obtain calling `fw_as_problem()`.
+We now call `fw_infer()` which requires an object of class `fw_problem` that is here obtained by calling `fw_as_problem()`.
 
 ```{R compute}
-res <- fw_infer(fw_as_problem(net))
+res <- fw_as_problem(net) |> fw_infer()
 class(res)
 dim(res$prediction)
 head(res$prediction)
 ```
 
-Note that we can also use extra parameters of the `limSolve::xsample()` that is called ultimately.
+Note that we can also use extra parameters of the `limSolve::xsample()`, which is ultimately called.
 
 ```{R compute2}
 res <- fw_infer(fw_as_problem(net), burninlength = 5000, iter = 5000, type = "mirror")
 class(res)
 ```
 
+<!--  WORKSHOP STUFF -->
+```R
+res <- fw_infer(fw_as_problem(net), burninlength = 5000, iter = 5000, type = "mirror") 
+    
+fw_range_plot(res, show_points = FALSE, show_lev = FALSE) + 
+  ggtitle("") +
+  xlab("") +
+  theme(text = element_text(size = 16))
+ggsave("distrib_2sp.png", width = 10, height = 8)
+
+fw_range_plot(res, show_points = TRUE, show_lev = FALSE) +
+  ggtitle("") +
+  xlab("") +
+  theme(text = element_text(size = 16))
+ggsave("distrib_2sp_points.png", width = 10, height = 8)
+
+
+fw_range_plot(res, show_points = FALSE, show_lev = TRUE) +
+  ylab("")
+ggsave("distrib_2sp_stab.png", width = 9, height = 7)
+
+fw_range_plot(res, show_points = FALSE, show_lev = TRUE, inv = TRUE) +
+  ggtitle("Resilience") + 
+  ylab("")
+ggsave("distrib_2sp_stab_res.png", width = 9, height = 7)
+
+```
+
 Here, `burninlength` = 5000, `iter` and `type` are actually parameters passed to `limSolve::xsample()`. The output is an object of class `fw_predicted` which is a list of two elements: 
   1. `prediction` a data frame of the prediction,
-  2. `problem` the orignal problem.
+  2. `problem` the original problem.
   
 ```{R pred}
 dim(res$prediction)
 head(res$prediction)
 ```
 
-There are functions to quickly eplore the result. For the range of interaction strengths can be used visualize with `fw_range_plot()`.
+There are functions to quickly explore the results. For the range of interaction strengths can be used visualize with `fw_range_plot()`.
 
 ```{R res}
 fw_range_plot(res)
 ```
 
-This function also allows one to see the individual points colored according to their stability.
+This function also allows one to see the individual points coloured according to their stability.
 
 ```{R range2}
 fw_range_plot(res, show_points = TRUE)
@@ -122,6 +150,11 @@ p1 <- fw_ode_plot(net_most_stable, rep(0.3, 2), seq(1, 500, 0.1)) +
 p2 <- fw_ode_plot(net_least_stable, rep(0.3, 2), seq(1, 500, 0.1)) +
   ggtitle("Maximum leading eigen value (least stable)")
 p1 / p2
+
+p1 + ggtitle("Most stable")
+ggsave("most_stable.png", width = 8, height = 6)
+p2 + ggtitle("Least stable")
+ggsave("least_stable.png", width = 8, height = 6)
 ```
 
 

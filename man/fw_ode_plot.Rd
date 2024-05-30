@@ -8,7 +8,7 @@
 \usage{
 fw_ode_plot(x, init, times)
 
-fw_range_plot(y, show_points = FALSE, show_lev = TRUE)
+fw_range_plot(y, show_points = FALSE, show_lev = TRUE, inv = FALSE)
 
 fw_range_compare_plot(y, prob = 0.25, show_lev = TRUE)
 }
