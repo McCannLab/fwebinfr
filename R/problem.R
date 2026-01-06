@@ -99,7 +99,6 @@ create_A_from_U <- function(U) {
 
 # useful when there are some info in U and other in A
 create_U_with_A <- function(U, A) {
-     #   browser()
     tmp_U <- create_U_from_A(A)
     # check whether they are additional unknown interactions
     id <- paste0(tmp_U$row, "_", tmp_U$col) %in% paste0(U$row, "_", U$col)

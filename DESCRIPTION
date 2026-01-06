@@ -1,6 +1,6 @@
 Package: fwebinfr
 Title: Infer Food Webs Interactions
-Version: 0.0.2
+Version: 0.0.2.9000
 Date: 2024-02-22
 Authors@R: 
     person(given = "Kevin",
@@ -16,7 +16,7 @@ Imports:
     deSolve (>= 1.4.0),
     dplyr (>= 1.1),
     ggplot2 (>= 3.4),
-    limSolve (>= 1.5),
+    limSolve (>= 2.0),
     patchwork (>= 1.2),
     Rcpp (>= 1.0.12),
     rootSolve (>= 1.8),
@@ -36,6 +36,6 @@ Suggests:
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 VignetteBuilder: knitr
 Config/testthat/edition: 3
